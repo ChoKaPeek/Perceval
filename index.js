@@ -1,4 +1,5 @@
 const Discord = require("discord.js");
+const Actions = require("./actions.js");
 require('dotenv').config();
 
 const client = new Discord.Client();
@@ -16,21 +17,12 @@ client.on("message", function(message) {
   const command = args.shift().toLowerCase();
 
   if (command === "help") {
-    message.reply(`Aide:
-        - /add <name>: Ajoute un joueur In-Game sans discord
-        - /add-discord <name>: Ajoute un joueur In-Game avec discord
-        - /level <name> <level>: Enregistre un nouveau niveau IG pour ce joueur
-        - /blame-war <name>: Blame un joueur pour une guerre
-        - /blame-gauntlet <name>: Blame un joueur pour un labyrinthe
-        - /repent <name>: Absout les péchés d'un joueur
-        - /show: Affiche les données
-        - /roster: Affiche le roster`);
+    message.reply(Actions.help());
   }
 
-  else if (command === "sum") {
-    const numArgs = args.map(x => parseFloat(x));
-    const sum = numArgs.reduce((counter, x) => counter += x);
-    message.reply(`The sum of all the arguments you provided is ${sum}!`);
+  else if (command === "add") {
+    if (!args.length) return;
+    message.reply(Actions.add());
   }
 });
 
