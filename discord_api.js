@@ -50,13 +50,13 @@ client.on("message", function(message) {
   else if (command === "blame-war") {
     if (args.length !== 1)
       return Errors.bad_arg(message);
-    Actions.blame(message, args, 1, 0);
+    Actions.blame(message, args, 1, 0, `${args[0]} a reçu un blame de guerre.`);
   }
 
   else if (command === "blame-gauntlet") {
     if (args.length !== 1)
       return Errors.bad_arg(message);
-    Actions.blame(message, args, 0, 1);
+    Actions.blame(message, args, 0, 1, `${args[0]} a reçu un blame labyrinthe.`);
   }
 
   else if (command === "repent") {

@@ -21,20 +21,17 @@ module.exports.show = function (message, range) {
     spreadsheetId: process.env.SPREADSHEET_ID,
     range: range,
   }, (err, res) => {
-    if (err) {
-      console.log('The API returned an error: ' + err);
-      return Errors.unknown(message);
-    }
+    if (err) return Errors.unknown(message, err);
+
     const str_table = Tools.parseTable(res.data.values);
-    if (!str_table.length) {
-      return Errors.unknown(message);
-    }
+    if (!str_table.length) return Errors.unknown(message);
+
     message.reply("```" + str_table.join("") + "```");
   });
 }
 
 module.exports.add = function (message, args, discord) {
-  Validators.not_exists(args[0], 'joueurs!A4:A')
+  Validators.exists(args[0], 'joueurs!A4:A', false)
   .then((success) => sheets.spreadsheets.values.append({
     spreadsheetId: process.env.SPREADSHEET_ID,
     range: 'joueurs!A:D',
@@ -47,23 +44,33 @@ module.exports.add = function (message, args, discord) {
     },
 
   }, (err, res) => {
-    if (err) {
-      console.log('The API returned an error: ' + err);
-      return Errors.unknown(message);
-    }
+    if (err) return Errors.unknown(message, err);
 
-    sheets.spreadsheets.batchUpdate({
-      spreadsheetId: process.env.SPREADSHEET_ID,
-      resource: Tools.rangeDate('joueurs!C:C')
-    }, (err, res) => {
-      if (err) {
-        console.log('The API returned an error: ' + err);
-        return Errors.unknown(message);
-      }
-      message.reply(`${args[0]} a correctement été ajouté(e) !`);
-    });
+    rangeFormat(message, 'joueurs!C:C', `${args[0]} a correctement été ajouté(e) !`);
   }))
-  .catch((err) => Errors.handle(message, err));
+  .catch((err) => {
+    // handle case where player exists (don't care if already has discord or
+    // not, could be improved)
+    if (discord) {
+      Validators.exists(args[0], 'joueurs!A4:A')
+      .then((success) => sheets.spreadsheets.values.update({
+        spreadsheetId: process.env.SPREADSHEET_ID,
+        range: 'joueurs!B' + success[0] + 4 + ':B' + success[0] + 4,
+        valueInputOption: "USER_ENTERED",
+        resource: {
+          values: [[discord]]
+        },
+
+      }, (err, res) => {
+        if (err) return Errors.unknown(message, err);
+
+        message.reply(`${args[0]} est maintenant sur Discord !`);
+      }))
+      .catch((err) => Errors.handle(message, err));
+    } else {
+      Errors.handle(message, err);
+    }
+  });
 }
 
 module.exports.level = function (message, args) {
@@ -84,26 +91,14 @@ module.exports.level = function (message, args) {
     },
 
   }, (err, res) => {
-    if (err) {
-      console.log('The API returned an error: ' + err);
-      return Errors.unknown(message);
-    }
+    if (err) return Errors.unknown(message, err);
 
-    sheets.spreadsheets.batchUpdate({
-      spreadsheetId: process.env.SPREADSHEET_ID,
-      resource: Tools.rangeDate('niveaux!C:C')
-    }, (err, res) => {
-      if (err) {
-        console.log('The API returned an error: ' + err);
-        return Errors.unknown(message);
-      }
-      message.reply(`${args[0]} est maintenant niveau ${args[1]} !`);
-    });
+    rangeFormat(message, 'niveaux!C:C', `${args[0]} est maintenant niveau ${args[1]} !`);
   }))
   .catch((err) => Errors.handle(message, err));
 }
 
-module.exports.blame = function (message, args, war, gauntlet) {
+module.exports.blame = function (message, args, war, gauntlet, reply) {
   Validators.exists(args[0], 'joueurs!A4:A')
   .then((success) => sheets.spreadsheets.values.append({
     spreadsheetId: process.env.SPREADSHEET_ID,
@@ -117,21 +112,34 @@ module.exports.blame = function (message, args, war, gauntlet) {
     },
 
   }, (err, res) => {
-    if (err) {
-      console.log('The API returned an error: ' + err);
-      return Errors.unknown(message);
-    }
+    if (err) return Errors.unknown(message, err);
 
-    sheets.spreadsheets.batchUpdate({
-      spreadsheetId: process.env.SPREADSHEET_ID,
-      resource: Tools.rangeDate('blames!D:D')
-    }, (err, res) => {
-      if (err) {
-        console.log('The API returned an error: ' + err);
-        return Errors.unknown(message);
-      }
-      message.reply(`${args[0]} a reçu un blame.`);
-    });
+    rangeFormat(message, 'blames!D:D', reply);
   }))
   .catch((err) => Errors.handle(message, err));
+}
+
+module.exports.repent = function (message, args) {
+  Validators.exists(args[0], 'joueurs!A4:A')
+  .then((success) => sheets.spreadsheets.values.get({
+    spreadsheetId: process.env.SPREADSHEET_ID,
+    range: 'blames!F4:H'
+  }, (err, res) => {
+    if (err) return Errors.unknown(message, err);
+
+    const data = res.data.values.filter((row) => row[0] === args[0])[0];
+    module.exports.blame(message, args, -parseInt(data[1]), -parseInt(data[2]), `${args[0]} a été pardonné(e) !`);
+  }))
+  .catch((err) => Errors.handle(message, err));
+}
+
+function rangeFormat(message, range, str) {
+  sheets.spreadsheets.batchUpdate({
+    spreadsheetId: process.env.SPREADSHEET_ID,
+    resource: Tools.rangeDate(range)
+  }, (err, res) => {
+    if (err) return Errors.unknown(message, err);
+
+    message.reply(str);
+  });
 }

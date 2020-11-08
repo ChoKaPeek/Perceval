@@ -1,7 +1,8 @@
 const sheets = require("./sheets_api.js").sheets;
 const Errors = require("./errors.js");
+const Tools = require("./tools.js");
 
-module.exports.not_exists = function (name, range) {
+module.exports.exists = function (name, range, should_exist=true) {
   return new Promise((resolve, reject) => {
     return sheets.spreadsheets.values.get({
       spreadsheetId: process.env.SPREADSHEET_ID,
@@ -11,28 +12,16 @@ module.exports.not_exists = function (name, range) {
         console.log('The API returned an error: ' + err);
         return reject({callback: Errors.unknown});
       }
-      if (!res.data.values.flat().filter((c) => c === name).length) {
-        return resolve();
+      const exists = !!res.data.values.flat().filter((c) => c === name).length
+      if (exists === should_exist) {
+        return resolve(Tools.findIndex(name, res.data.values));
       }
-      reject({callback: Errors.player_exists, args: [name]});
-    });
-  });
-}
 
-module.exports.exists = function (name, range) {
-  return new Promise((resolve, reject) => {
-    return sheets.spreadsheets.values.get({
-      spreadsheetId: process.env.SPREADSHEET_ID,
-      range: range
-    }, (err, res) => {
-      if (err) {
-        console.log('The API returned an error: ' + err);
-        return reject({callback: Errors.unknown});
+      if (should_exist) {
+        reject({callback: Errors.missing_player, args: [name]})
+      } else {
+        reject({callback: Errors.player_exists, args: [name]})
       }
-      if (!res.data.values.flat().filter((c) => c === name).length) {
-        return reject({callback: Errors.missing_player, args: [name]});
-      }
-      resolve();
     });
   });
 }

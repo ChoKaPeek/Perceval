@@ -1,6 +1,18 @@
 const JOUEURS_SID = 1611105066;
 const NIVEAUX_SID = 646100848;
+const BLAMES_SID = 768802987;
 const CELL_SIZE = 13;
+
+module.exports.findIndex = function (elt, arr) {
+  for (let i = 0; i < arr.length; ++i) {
+    for (let j = 0; j < arr[i].length; ++j) {
+      if (arr[i][j] === elt) {
+        return [i, j]
+      }
+    }
+  }
+  return null
+}
 
 module.exports.parseTable = function (rows) {
   const str_table = [];
@@ -51,6 +63,9 @@ function getID(sheet) {
   }
   else if (sheet === "niveaux") {
     return NIVEAUX_SID;
+  }
+  else if (sheet === "blames") {
+    return BLAMES_SID;
   }
   return -1;
 }

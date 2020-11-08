@@ -1,7 +1,10 @@
 const client = require("./discord_api.js").client;
 const admin = '<@237272256366116867>';
 
-function unknown(message) {
+function unknown(message, err=null) {
+  if (err) {
+    console.log('The API returned an error: ' + err);
+  }
   return message.reply(`Désolé, une erreur s'est produite. Contactez ${admin} pour résoudre le problème.`);
 }
 
@@ -28,6 +31,5 @@ module.exports.handle = function (message, err) {
   if (err.callback) {
     return err.callback(message, ...err.args);
   }
-  console.log('Caught error: ' + err);
-  return unknown(message);
+  return unknown(message, err);
 }
