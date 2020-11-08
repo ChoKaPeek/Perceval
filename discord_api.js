@@ -28,8 +28,15 @@ client.on("message", function(message) {
   }
 
   else if (command === "add") {
-    if (!args.length)
-      Errors.bad_arg(message);
+    if (args.length != 1)
+      return Errors.bad_arg(message);
+    Actions.add(message, args, 0);
+  }
+
+  else if (command === "add-discord") {
+    if (args.length != 1)
+      return Errors.bad_arg(message);
+    Actions.add(message, args, 1);
   }
 });
 

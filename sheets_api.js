@@ -29,16 +29,16 @@ function getNewToken(oAuth2Client, callback) {
     access_type: 'online',
     scope: SCOPES,
   });
-  console.log('Authorize this app by visiting this url: ', authUrl);
+  console.log('Authorize this app by visiting this url:', authUrl);
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
   });
-  rl.question('Enter the code from that page here: ', (code) => {
+  rl.question('Enter the code from that page here:', (code) => {
     rl.close();
     oAuth2Client.getToken(code, (err, token) => {
       if (err) {
-        return console.error('Error while trying to retrieve access token: ', err);
+        return console.error('Error while trying to retrieve access token:', err);
       }
       oAuth2Client.setCredentials(token);
       // Store the token to disk for later program executions
@@ -46,7 +46,7 @@ function getNewToken(oAuth2Client, callback) {
         if (err) {
           return console.error(err);
         }
-        console.log('Token stored to ', TOKEN_PATH);
+        console.log('Token stored to', TOKEN_PATH);
       });
       callback();
     });
