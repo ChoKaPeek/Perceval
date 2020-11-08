@@ -46,7 +46,6 @@ module.exports.add = function (message, args, discord) {
   }, (err, res) => {
     if (err) return Errors.unknown(message, err);
 
-    console.log(res);
     rangeFormat(message, 'joueurs!C:C', `${args[0]} a correctement été ajouté(e) !`);
   }))
   .catch((err) => {

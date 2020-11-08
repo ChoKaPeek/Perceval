@@ -2,6 +2,12 @@ const sheets = require("./sheets_api.js").sheets;
 const Errors = require("./errors.js");
 const Tools = require("./tools.js");
 
+const COUR_MARTIALE = "773882975707463710";
+
+module.exports.authorized = function (message) {
+  return message.channel.id === COUR_MARTIALE;
+}
+
 module.exports.exists = function (name, range, should_exist=true) {
   return new Promise((resolve, reject) => {
     return sheets.spreadsheets.values.get({

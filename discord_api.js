@@ -6,6 +6,7 @@ module.exports.client = client;
 
 const Actions = require("./actions.js");
 const Errors = require("./errors.js");
+const Validators = require("./validators.js");
 
 const prefix = "/";
 
@@ -29,43 +30,57 @@ client.on("message", function(message) {
     Actions.show(message, 'Visualisation!B3:H22');
   }
 
-  else if (command === "add") {
+  if (command === "add") {
+    if (!Validators.authorized(message))
+      return Errors.unauthorized(message);
     if (args.length !== 1)
       return Errors.bad_arg(message);
     Actions.add(message, args, 0);
   }
 
   else if (command === "add-discord") {
+    if (!Validators.authorized(message))
+      return Errors.unauthorized(message);
     if (args.length !== 1)
       return Errors.bad_arg(message);
     Actions.add(message, args, 1);
   }
 
   else if (command === "remove") {
+    if (!Validators.authorized(message))
+      return Errors.unauthorized(message);
     if (args.length !== 1)
       return Errors.bad_arg(message);
     Actions.remove(message, args);
   }
 
   else if (command === "level") {
+    if (!Validators.authorized(message))
+      return Errors.unauthorized(message);
     if (args.length !== 2)
       return Errors.bad_arg(message);
     Actions.level(message, args);
   }
 
   else if (command === "blame-war") {
+    if (!Validators.authorized(message))
+      return Errors.unauthorized(message);
     if (args.length !== 1)
       return Errors.bad_arg(message);
     Actions.blame(message, args, 1, 0, `${args[0]} a reçu un blame de guerre.`);
   }
 
   else if (command === "blame-gauntlet") {
+    if (!Validators.authorized(message))
+      return Errors.unauthorized(message);
     if (args.length !== 1)
       return Errors.bad_arg(message);
     Actions.blame(message, args, 0, 1, `${args[0]} a reçu un blame labyrinthe.`);
   }
 
   else if (command === "repent") {
+    if (!Validators.authorized(message))
+      return Errors.unauthorized(message);
     if (args.length !== 1)
       return Errors.bad_arg(message);
     Actions.repent(message, args);
