@@ -21,8 +21,12 @@ client.on("message", function(message) {
     Actions.help(message);
   }
 
+  else if (command === "roster") {
+    Actions.show(message, 'Roster!B:F');
+  }
+
   else if (command === "show") {
-    Actions.show(message);
+    Actions.show(message, 'Visualisation!B3:H22');
   }
 
   else if (command === "add") {
@@ -41,6 +45,24 @@ client.on("message", function(message) {
     if (args.length !== 2)
       return Errors.bad_arg(message);
     Actions.level(message, args);
+  }
+
+  else if (command === "blame-war") {
+    if (args.length !== 1)
+      return Errors.bad_arg(message);
+    Actions.blame(message, args, 1, 0);
+  }
+
+  else if (command === "blame-gauntlet") {
+    if (args.length !== 1)
+      return Errors.bad_arg(message);
+    Actions.blame(message, args, 0, 1);
+  }
+
+  else if (command === "repent") {
+    if (args.length !== 1)
+      return Errors.bad_arg(message);
+    Actions.repent(message, args);
   }
 });
 
