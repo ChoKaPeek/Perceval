@@ -41,11 +41,11 @@ module.exports.add = function (message, args, discord) {
       values: [
         [args[0], discord, dateFormat(Date.now(), "dd/mm/yyyy h:MM:ss")]
       ]
-    },
-
+    }
   }, (err, res) => {
     if (err) return Errors.unknown(message, err);
 
+    console.log(res);
     rangeFormat(message, 'joueurs!C:C', `${args[0]} a correctement été ajouté(e) !`);
   }))
   .catch((err) => {
@@ -55,7 +55,7 @@ module.exports.add = function (message, args, discord) {
       Validators.exists(args[0], 'joueurs!A4:A')
       .then((success) => sheets.spreadsheets.values.update({
         spreadsheetId: process.env.SPREADSHEET_ID,
-        range: 'joueurs!B' + success[0] + 4 + ':B' + success[0] + 4,
+        range: `joueurs!B${success[0] + 4}:B${success[0] + 4}`,
         valueInputOption: "USER_ENTERED",
         resource: {
           values: [[discord]]
