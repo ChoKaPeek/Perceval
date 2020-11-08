@@ -1,10 +1,33 @@
 const client = require("./discord_api.js").client;
 const admin = '<@237272256366116867>';
 
-module.exports.bad_arg = function (message) {
+function unknown(message) {
+  return message.reply(`Désolé, une erreur s'est produite. Contactez ${admin} pour résoudre le problème.`);
+}
+
+function missing_player(message, name) {
+  return message.reply(`Le joueur ${name} n'existe pas dans la base.`);
+}
+
+function player_exists(message, name) {
+  return message.reply(`Le joueur ${name} existe déjà dans la base.`);
+}
+
+function bad_arg(message) {
   return message.reply(`Arguments invalides.`);
 }
 
-module.exports.unknown = function (message) {
-  return message.reply(`Désolé, une erreur s'est produite. Contactez ${admin} pour résoudre le problème.`);
+module.exports = {
+  unknown,
+  missing_player,
+  player_exists,
+  bad_arg
+}
+
+module.exports.handle = function (message, err) {
+  if (err.callback) {
+    return err.callback(message, ...err.args);
+  }
+  console.log('Caught error: ' + err);
+  return unknown(message);
 }
