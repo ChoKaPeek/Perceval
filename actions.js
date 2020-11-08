@@ -27,7 +27,17 @@ module.exports.show = function (message, range) {
     const str_table = Tools.parseTable(res.data.values);
     if (!str_table.length) return Errors.unknown(message);
 
-    message.reply("```" + str_table.join("") + "```");
+    let str = "";
+    for (let i = 0; i < str_table.length; ++i) {
+      if ((str + str_table[i]).length > 1900) {
+        message.reply("```" + str + "```");
+        str = "";
+      }
+      str += str_table[i];
+    }
+    if (str) {
+      message.reply("```" + str + "```");
+    }
   });
 }
 
