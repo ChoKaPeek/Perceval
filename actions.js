@@ -2,8 +2,8 @@ const {google} = require('googleapis');
 const dateFormat = require('dateformat');
 const sheets = require("./sheets_api.js").sheets;
 const Errors = require("./errors.js");
+const Tools = require("./tools.js");
 
-const JOUEURS_SID = 1611105066;
 const CELL_SIZE = 13;
 
 module.exports.help = function (message) {
@@ -57,7 +57,7 @@ module.exports.add = function (message, args, discord) {
     insertDataOption: "INSERT_ROWS",
     resource: {
       values: [
-        [args[0], discord, `${dateFormat(Date.now(), "dd/mm/yyyy h:MM:ss")}`]
+        [args[0], discord, dateFormat(Date.now(), "dd/mm/yyyy h:MM:ss")]
       ]
     },
 
@@ -69,30 +69,44 @@ module.exports.add = function (message, args, discord) {
 
     sheets.spreadsheets.batchUpdate({
       spreadsheetId: process.env.SPREADSHEET_ID,
-      resource: {
-        requests: [{
-          repeatCell: {
-            range: {
-              sheetId: JOUEURS_SID, startColumnIndex: 2, endColumnIndex: 3
-            },
-            cell: {
-              userEnteredFormat: {
-                numberFormat: {
-                  type: "DATE",
-                  pattern: "dd/mm/yyyy hh:mm:ss"
-                }
-              }
-            },
-            fields: "userEnteredFormat.numberFormat"
-          }
-        }]
-      }
+      resource: Tools.rangeDate('joueurs!C:C')
     }, (err, res) => {
       if (err) {
         console.log('The API returned an error: ' + err);
         return Errors.unknown(message);
       }
       message.reply(`${args[0]} a correctement été ajouté(e) !`);
+    });
+  });
+}
+
+module.exports.level = function (message, args) {
+  sheets.spreadsheets.values.append({
+    spreadsheetId: process.env.SPREADSHEET_ID,
+    range: 'niveaux!A:C',
+    valueInputOption: "USER_ENTERED",
+    insertDataOption: "INSERT_ROWS",
+    resource: {
+      values: [
+        [args[0], args[1], dateFormat(Date.now(), "dd/mm/yyyy h:MM:ss")]
+      ]
+    },
+
+  }, (err, res) => {
+    if (err) {
+      console.log('The API returned an error: ' + err);
+      return Errors.unknown(message);
+    }
+
+    sheets.spreadsheets.batchUpdate({
+      spreadsheetId: process.env.SPREADSHEET_ID,
+      resource: Tools.rangeDate('niveaux!C:C')
+    }, (err, res) => {
+      if (err) {
+        console.log('The API returned an error: ' + err);
+        return Errors.unknown(message);
+      }
+      message.reply(`${args[0]} est maintenant niveau ${args[1]} !`);
     });
   });
 }

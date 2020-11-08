@@ -1,2 +1,3 @@
-require("./discord_api.js");
+require('dotenv').config();
 require("./sheets_api.js");
+require("./discord_api.js");

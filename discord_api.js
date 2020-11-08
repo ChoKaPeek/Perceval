@@ -1,5 +1,3 @@
-require('dotenv').config();
-
 console.log("Discord Client connecting...");
 
 const Discord = require("discord.js");
@@ -28,15 +26,21 @@ client.on("message", function(message) {
   }
 
   else if (command === "add") {
-    if (args.length != 1)
+    if (args.length !== 1)
       return Errors.bad_arg(message);
     Actions.add(message, args, 0);
   }
 
   else if (command === "add-discord") {
-    if (args.length != 1)
+    if (args.length !== 1)
       return Errors.bad_arg(message);
     Actions.add(message, args, 1);
+  }
+
+  else if (command === "level") {
+    if (args.length !== 2)
+      return Errors.bad_arg(message);
+    Actions.level(message, args);
   }
 });
 
