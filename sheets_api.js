@@ -14,7 +14,7 @@ module.exports.sheets = google.sheets({version: 'v4', auth});
 function authorize(callback) {
     const jwtClient = new JWT({
         email: process.env.SERVICE_ACCOUNT_EMAIL,
-        key: process.env.SERVICE_ACCOUNT_KEY,
+        key: process.env.SERVICE_ACCOUNT_KEY.replace(/\\n/g, '\n'),
         scopes: SCOPES,
         subject: null,
     });
