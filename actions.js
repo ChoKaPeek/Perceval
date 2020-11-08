@@ -8,6 +8,7 @@ module.exports.help = function (message) {
   message.reply(`Aide:
     - /add <name>: Ajoute un joueur In-Game sans discord
     - /add-discord <name>: Ajoute un joueur In-Game avec discord
+    - /remove <name>: Retire un joueur de la guilde
     - /level <name> <level>: Enregistre un nouveau niveau IG pour ce joueur
     - /blame-war <name>: Blame un joueur pour une guerre
     - /blame-gauntlet <name>: Blame un joueur pour un labyrinthe
@@ -71,6 +72,24 @@ module.exports.add = function (message, args, discord) {
       Errors.handle(message, err);
     }
   });
+}
+
+module.exports.remove = function (message, args) {
+  Validators.exists(args[0], 'joueurs!A4:A')
+  .then((success) => sheets.spreadsheets.values.update({
+    spreadsheetId: process.env.SPREADSHEET_ID,
+    range: `joueurs!D${success[0] + 4}:D${success[0] + 4}`,
+    valueInputOption: "USER_ENTERED",
+    resource: {
+      values: [[dateFormat(Date.now(), "dd/mm/yyyy h:MM:ss")]]
+    },
+
+  }, (err, res) => {
+    if (err) return Errors.unknown(message, err);
+
+    message.reply(`${args[0]} a été retiré(e) de la guilde.`);
+  }))
+  .catch((err) => Errors.handle(message, err));
 }
 
 module.exports.level = function (message, args) {

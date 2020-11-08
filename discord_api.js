@@ -41,6 +41,12 @@ client.on("message", function(message) {
     Actions.add(message, args, 1);
   }
 
+  else if (command === "remove") {
+    if (args.length !== 1)
+      return Errors.bad_arg(message);
+    Actions.remove(message, args);
+  }
+
   else if (command === "level") {
     if (args.length !== 2)
       return Errors.bad_arg(message);
