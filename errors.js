@@ -13,11 +13,17 @@ function unauthorized(message) {
 }
 
 function missing_player(message, name) {
-  return message.reply(`Le joueur ${name} n'existe pas dans la base.`);
+  if (typeof(name) === "str") {
+    return message.reply(`Le joueur ${name} n'existe pas dans la base.`);
+  }
+  return message.reply(`Les joueurs ${name.join(', ')} n'existent pas dans la base.`);
 }
 
 function player_exists(message, name) {
-  return message.reply(`Le joueur ${name} existe déjà dans la base.`);
+  if (typeof(name) === "str") {
+    return message.reply(`Le joueur ${name} existe déjà dans la base.`);
+  }
+  return message.reply(`Les joueurs ${name.join(', ')} existent déjà dans la base.`);
 }
 
 function bad_arg(message) {

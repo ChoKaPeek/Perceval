@@ -31,3 +31,32 @@ module.exports.exists = function (name, range, should_exist=true) {
     });
   });
 }
+
+module.exports.exist = function (names, range, should_exist=true) {
+  return new Promise((resolve, reject) => {
+    return sheets.spreadsheets.values.get({
+      spreadsheetId: process.env.SPREADSHEET_ID,
+      range: range
+    }, (err, res) => {
+      if (err) {
+        console.log('The API returned an error: ' + err);
+        return reject({callback: Errors.unknown});
+      }
+      const exist = res.data.values.flat().filter((c) => names.includes(c))
+      if (should_exist) {
+        if (exist.length === names.length) {
+          return resolve(Tools.findIndices(names, res.data.values));
+        }
+        reject({
+          callback: Errors.missing_player,
+          args: [names.filter((n) => !exist.includes(n))]
+        })
+      } else {
+        if (exist.length === 0) {
+          return resolve(Tools.findIndices(names, res.data.values));
+        }
+        reject({callback: Errors.player_exists, args: [exist]})
+      }
+    });
+  });
+}

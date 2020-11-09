@@ -2,7 +2,6 @@ const JOUEURS_SID = 1611105066;
 const NIVEAUX_SID = 646100848;
 const BLAMES_SID = 768802987;
 const CELL_SIZE = 13;
-
 module.exports.findIndex = function (elt, arr) {
   for (let i = 0; i < arr.length; ++i) {
     for (let j = 0; j < arr[i].length; ++j) {
@@ -12,6 +11,13 @@ module.exports.findIndex = function (elt, arr) {
     }
   }
   return null
+}
+
+module.exports.findIndices = function (elts, arr) {
+  const res = elts.map((e) => module.exports.findIndex(e, arr))
+  if (res.includes(null))
+    return null
+  return res
 }
 
 module.exports.parseTable = function (rows) {

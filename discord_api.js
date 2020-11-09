@@ -57,7 +57,7 @@ client.on("message", function(message) {
   else if (command === "level") {
     if (!Validators.authorized(message))
       return Errors.unauthorized(message);
-    if (args.length !== 2)
+    if (args.length === 0 || args.length % 2 !== 0)
       return Errors.bad_arg(message);
     Actions.level(message, args);
   }

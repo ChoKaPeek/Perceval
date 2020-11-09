@@ -102,26 +102,27 @@ module.exports.remove = function (message, args) {
 }
 
 module.exports.level = function (message, args) {
-  if (isNaN(parseInt(args[1]))) {
+  names = args.filter((v, i) => i % 2 === 0)
+  levels = args.filter((v, i) => i % 2 === 1)
+
+  if (levels.filter((v) => isNaN(parseInt(v))).length) {
     return Errors.bad_arg(message);
   }
 
-  Validators.exists(args[0], 'joueurs!A4:A')
+  Validators.exist(names, 'joueurs!A4:A')
   .then((success) => sheets.spreadsheets.values.append({
     spreadsheetId: process.env.SPREADSHEET_ID,
     range: 'niveaux!A:C',
     valueInputOption: "USER_ENTERED",
     insertDataOption: "OVERWRITE",
     resource: {
-      values: [
-        [args[0], args[1], dateFormat(Date.now(), "dd/mm/yyyy h:MM:ss")]
-      ]
+      values: names.map((v, i) => [v, levels[i], dateFormat(Date.now(), "dd/mm/yyyy h:MM:ss")])
     },
 
   }, (err, res) => {
     if (err) return Errors.unknown(message, err);
 
-    rangeFormat(message, 'niveaux!C:C', `${args[0]} est maintenant niveau ${args[1]} !`);
+    rangeFormat(message, 'niveaux!C:C', `${names.join(', ')} sont maintenant respectivement niveaux ${levels.join(', ')} !`);
   }))
   .catch((err) => Errors.handle(message, err));
 }
