@@ -61,15 +61,16 @@ function ping_war(channel, remain_t) {
   const mentionList = War.getMentionList(channel.id);
 
   if (remain_t === 0) {
-    msg = "La guerre est terminée.";
+    msg = "La guerre est terminée.\n";
     if (mentionList.length !== 0) {
       msg += `Les joueurs ${mentionList.join(", ")} n'ont pas pris part à la guerre.`;
     }
   } else {
     msg = `La guerre se terminera dans ${Tools.getRemainingTimeString(remain_t)}.`;
     if (mentionList.length !== 0) {
-      msg += `${War.getMentionList(channel.id).join(", ")}, n'oubliez pas votre combat !
-      Une fois effectué tapez \`/war done\`, ou \`/war bye\` si vous n'êtes pas matchés.`;
+      msg += `
+${War.getMentionList(channel.id).join(", ")}, n'oubliez pas votre combat !
+Une fois effectué tapez \`/war done\`, ou \`/war bye\` si vous n'êtes pas matchés.`;
     }
   }
 

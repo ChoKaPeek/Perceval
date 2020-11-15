@@ -28,7 +28,10 @@ module.exports.sync_error = function (entity) {
   return answer(entity, `Erreur de lecture d'éléments discord. Contactez ${admin} pour résoudre le problème.`);
 }
 
-module.exports.not_war_listed = function (entity) {
+module.exports.not_war_listed = function (entity, name=null) {
+  if (name)
+    return answer(entity, `${name} n'est pas listé(e) dans cette guerre.`);
+
   return answer(entity, `Tu n'es pas listé(e) dans cette guerre.`);
 }
 
@@ -51,7 +54,7 @@ module.exports.player_exists = function (entity, name) {
 }
 
 module.exports.bad_arg = function (entity) {
-  return answer(entity, `Arguments invalides.`);
+  return answer(entity, `Arguments invalides. Consultez \`/help\`.`);
 }
 
 module.exports.handle = function (entity, err) {

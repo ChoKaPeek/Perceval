@@ -19,6 +19,7 @@ module.exports.help = function (message) {
     - /war [action]: Actions disponibles:
         - start [time]: Démarre une guerre, avec pour temps restant 'time'.
                         Le temps restant est lu sous forme [XXh][XXm][XXs].
+                        Il vaut 24 heures par défaut.
         - stop: Annule une guerre en cours.
         - done: Marque ton combat effectué.
         - bye: Désactive tes notifications si tu n'es pas matché.
@@ -182,15 +183,47 @@ module.exports.stopWar = function (message) {
   message.reply(`La guerre a été correctement annulée.`);
 }
 
-module.exports.doneWar = function (message) {
-  if (!War.done(message.channel.id, message.author.id)) {
-    Errors.not_war_listed(message);
+module.exports.doneWar = function (message, args) {
+  const ids = Array.from(message.mentions.users.keys());
+  if (ids.length) {
+    if (args.length !== ids.length + 1)
+      return Errors.bad_arg(message);
+    ids.map((id) => {
+      if (!War.done(message.channel.id, id)) {
+        Errors.not_war_listed(message, message.mentions.users.get(id).username);
+      } else {
+        message.reply(`Le combat de ${message.mentions.users.get(id).username} est validé.`);
+      }
+    });
+  } else {
+    if (args.length > 1)
+      return Errors.bad_arg(message);
+    if (!War.done(message.channel.id, message.author.id)) {
+      return Errors.not_war_listed(message);
+    }
+    message.reply("Merci pour ta bravoure, soldat !");
   }
 }
 
-module.exports.byeWar = function (message) {
-  if (!War.done(message.channel.id, message.author.id)) {
-    Errors.not_war_listed(message);
+module.exports.byeWar = function (message, args) {
+  const ids = Array.from(message.mentions.users.keys());
+  if (ids.length) {
+    if (args.length !== ids.length + 1)
+      return Errors.bad_arg(message);
+    ids.map((id) => {
+      if (!War.done(message.channel.id, id)) {
+        Errors.not_war_listed(message, message.mentions.users.get(id).username);
+      } else {
+        message.reply(`Les notifications de ${message.mentions.users.get(id).username} sont annulées.`);
+      }
+    });
+  } else {
+    if (args.length > 1)
+      return Errors.bad_arg(message);
+    if (!War.done(message.channel.id, message.author.id)) {
+      return Errors.not_war_listed(message);
+    }
+    message.reply("Ne t'en fais pas, ton tour viendra !");
   }
 }
 

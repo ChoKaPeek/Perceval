@@ -125,9 +125,9 @@ client.on("message", function(message) {
       }
 
       if (args[0] === "done") {
-        Actions.doneWar(message);
+        Actions.doneWar(message, args);
       } else if (args[0] === "bye") {
-        Actions.byeWar(message);
+        Actions.byeWar(message, args);
       }
     })
     .catch((err) => Errors.handle(message, err));
