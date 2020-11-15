@@ -70,24 +70,21 @@ client.on("message", function(message) {
     .catch((err) => Errors.handle(message, err));
   }
 
-  else if (command === "blame-war") {
-    Validators.authorized(message)
-    .then((success) => {
-      if (args.length !== 1)
-        return Errors.bad_arg(message);
-      Actions.blame(message, args, 1, 0, `${args[0]} a reçu un blame de guerre.`);
-    })
-    .catch((err) => Errors.handle(message, err));
-  }
+  else if (command === "gauntlet") {
+    if (args.length === 0)
+      return Errors.bad_arg(message);
 
-  else if (command === "blame-gauntlet") {
-    Validators.authorized(message)
-    .then((success) => {
-      if (args.length !== 1)
-        return Errors.bad_arg(message);
-      Actions.blame(message, args, 0, 1, `${args[0]} a reçu un blame labyrinthe.`);
-    })
-    .catch((err) => Errors.handle(message, err));
+    if (args[0] === "blame") {
+      return Validators.authorized(message)
+      .then((success) => {
+        if (args.length !== 2)
+          return Errors.bad_arg(message);
+        Actions.blame(message, args[1], 0, 1, `${args[1]} a reçu un blame labyrinthe.`);
+      })
+      .catch((err) => Errors.handle(message, err));
+    }
+
+    return Errors.bad_arg(message);
   }
 
   else if (command === "repent") {
@@ -104,7 +101,17 @@ client.on("message", function(message) {
     if (args.length === 0)
       return Errors.bad_arg(message);
 
-    Validators.war_channel(message)
+    if (args[0] === "blame") {
+      return Validators.authorized(message)
+      .then((success) => {
+        if (args.length !== 2)
+          return Errors.bad_arg(message);
+        Actions.blame(message, args[1], 1, 0, `${args[1]} a reçu un blame de guerre.`);
+      })
+      .catch((err) => Errors.handle(message, err));
+    }
+
+    return Validators.war_channel(message)
     .then((success) => {
       if (args[0] === "stop") {
         return Validators.authorized(message)
@@ -131,6 +138,8 @@ client.on("message", function(message) {
       }
     })
     .catch((err) => Errors.handle(message, err));
+
+    return Errors.bad_arg(message);
   }
 });
 

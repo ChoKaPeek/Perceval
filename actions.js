@@ -12,17 +12,20 @@ module.exports.help = function (message) {
     - /add-discord <name>: Ajoute un joueur In-Game avec discord
     - /remove <name>: Retire un joueur de la guilde
     - /level <name> <level>: Enregistre un nouveau niveau IG pour ce joueur
-    - /blame-war <name>: Blame un joueur pour une guerre
-    - /blame-gauntlet <name>: Blame un joueur pour un labyrinthe
     - /repent <name>: Absout les péchés d'un joueur
     - /show: Affiche les données
-    - /war [action]: Actions disponibles:
+    - /gauntlet <action>: Actions disponibles :
+        - blame <name>: Blame un joueur pour un labyrinthe
+    - /war <action>: Actions disponibles :
         - start [time]: Démarre une guerre, avec pour temps restant 'time'.
                         Le temps restant est lu sous forme [XXh][XXm][XXs].
                         Il vaut 24 heures par défaut.
         - stop: Annule une guerre en cours.
-        - done: Marque ton combat effectué.
-        - bye: Désactive tes notifications si tu n'es pas matché.
+        - done [mentions]: Si joueurs mentionnés, marque leur combat effectué.
+                           Sinon, c'est le combat de l'auteur.
+        - bye [mentions]: Si joueurs mentionnés, désactive leurs notifications.
+                          Sinon, désactive les notifications de l'auteur.
+        - blame <name>: Blame un joueur pour une guerre
     - /roster: Affiche le roster`);
 }
 
@@ -136,8 +139,8 @@ module.exports.level = function (message, args) {
   .catch((err) => Errors.handle(message, err));
 }
 
-module.exports.blame = function (message, args, war, gauntlet, reply) {
-  Validators.exists(args[0], 'joueurs!A4:A')
+module.exports.blame = function (message, name, war, gauntlet, reply) {
+  Validators.exists(name, 'joueurs!A4:A')
   .then((success) => sheets.spreadsheets.values.append({
     spreadsheetId: process.env.SPREADSHEET_ID,
     range: 'blames!A:D',
@@ -145,7 +148,7 @@ module.exports.blame = function (message, args, war, gauntlet, reply) {
     insertDataOption: "OVERWRITE",
     resource: {
       values: [
-        [args[0], war, gauntlet, dateFormat(Date.now(), "dd/mm/yyyy h:MM:ss")]
+        [name, war, gauntlet, dateFormat(Date.now(), "dd/mm/yyyy h:MM:ss")]
       ]
     },
 
