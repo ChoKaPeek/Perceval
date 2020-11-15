@@ -3,6 +3,8 @@ const sheets = require("./sheets_api.js").sheets;
 const Errors = require("./errors.js");
 const Tools = require("./tools.js");
 const Validators = require("./validators.js");
+const Cronjobs = require("./cronjobs.js");
+const War = require("./war.js");
 
 module.exports.help = function (message) {
   message.reply(`Aide:
@@ -14,6 +16,12 @@ module.exports.help = function (message) {
     - /blame-gauntlet <name>: Blame un joueur pour un labyrinthe
     - /repent <name>: Absout les péchés d'un joueur
     - /show: Affiche les données
+    - /war [action]: Actions disponibles:
+        - start [time]: Démarre une guerre, avec pour temps restant 'time'.
+                        Le temps restant est lu sous forme [XXh][XXm][XXs].
+        - stop: Annule une guerre en cours.
+        - done: Marque ton combat effectué.
+        - bye: Désactive tes notifications si tu n'es pas matché.
     - /roster: Affiche le roster`);
 }
 
@@ -160,6 +168,47 @@ module.exports.repent = function (message, args) {
     module.exports.blame(message, args, -parseInt(data[1]), -parseInt(data[2]), `${args[0]} a été pardonné(e) !`);
   }))
   .catch((err) => Errors.handle(message, err));
+}
+
+module.exports.startWar = function (message, time=undefined) {
+  War.initialize(message.channel);
+  if (time) {
+    let timestamp = 0;
+    const h = time.split("h");
+    if (h.length === 2) {
+      timestamp += 1000 * 60 * 60 * parseInt(h[0].slice(-2), 10);
+    }
+    const m = time.split("m");
+    if (m.length === 2) {
+      timestamp += 1000 * 60 * parseInt(m[0].slice(-2), 10);
+    }
+    const s = time.split("s");
+    if (s.length === 2) {
+      timestamp += 1000 * parseInt(s[0].slice(-2), 10);
+    }
+    Cronjobs.register_war_pings(message.channel, timestamp);
+  } else {
+    Cronjobs.register_war_pings(message.channel);
+  }
+}
+
+module.exports.stopWar = function (message) {
+  if (!Cronjobs.stop_war()) {
+    return Errors.no_war(message);
+  }
+  message.reply(`La guerre a été correctement annulée.`);
+}
+
+module.exports.doneWar = function (message) {
+  if (!War.done(message.channel.id, message.author.id)) {
+    Errors.not_war_listed(message);
+  }
+}
+
+module.exports.byeWar = function (message) {
+  if (!War.done(message.channel.id, message.author.id)) {
+    Errors.not_war_listed(message);
+  }
 }
 
 function rangeFormat(message, range, str) {

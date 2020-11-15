@@ -1,46 +1,66 @@
 const client = require("./discord_api.js").client;
 const admin = '<@237272256366116867>';
 
-function unknown(message, err=null) {
+function answer(entity, response) {
+  if (entity.reply) {
+    entity.reply(response); // message
+  } else {
+    entity.send(response); // channel
+  }
+}
+
+module.exports.no_war = function (entity) {
+  return answer(entity, `Il n'y a pas de guerre en cours sur ce canal de discussion.`);
+}
+
+module.exports.unknown = function (entity, err=null) {
   if (err) {
     console.log('The API returned an error: ' + err);
   }
-  return message.reply(`Désolé, une erreur s'est produite. Contactez ${admin} pour résoudre le problème.`);
+  return answer(entity, `Désolé, une erreur s'est produite. Contactez ${admin} pour résoudre le problème.`);
 }
 
-function unauthorized(message) {
-  return message.reply(`Action non authorisée.`);
+module.exports.bad_channel = function (entity) {
+  return answer(entity, `Action impossible dans ce canal de discussion.`);
 }
 
-function missing_player(message, name) {
-  if (typeof(name) === "str") {
-    return message.reply(`Le joueur ${name} n'existe pas dans la base.`);
+module.exports.sync_error = function (entity) {
+  return answer(entity, `Erreur de lecture d'éléments discord. Contactez ${admin} pour résoudre le problème.`);
+}
+
+module.exports.not_war_listed = function (entity) {
+  return answer(entity, `Tu n'es pas listé(e) dans cette guerre.`);
+}
+
+module.exports.unauthorized = function (entity) {
+  return answer(entity, `Action non authorisée.`);
+}
+
+module.exports.missing_player = function (entity, name) {
+  if (typeof(name) === "string") {
+    return answer(entity, `Le joueur ${name} n'existe pas dans la base.`);
   }
-  return message.reply(`Les joueurs ${name.join(', ')} n'existent pas dans la base.`);
+  return answer(entity, `Les joueurs ${name.join(', ')} n'existent pas dans la base.`);
 }
 
-function player_exists(message, name) {
-  if (typeof(name) === "str") {
-    return message.reply(`Le joueur ${name} existe déjà dans la base.`);
+module.exports.player_exists = function (entity, name) {
+  if (typeof(name) === "string") {
+    return answer(entity, `Le joueur ${name} existe déjà dans la base.`);
   }
-  return message.reply(`Les joueurs ${name.join(', ')} existent déjà dans la base.`);
+  return answer(entity, `Les joueurs ${name.join(', ')} existent déjà dans la base.`);
 }
 
-function bad_arg(message) {
-  return message.reply(`Arguments invalides.`);
+module.exports.bad_arg = function (entity) {
+  return answer(entity, `Arguments invalides.`);
 }
 
-module.exports = {
-  unknown,
-  unauthorized,
-  missing_player,
-  player_exists,
-  bad_arg
-}
-
-module.exports.handle = function (message, err) {
+module.exports.handle = function (entity, err) {
   if (err.callback) {
-    return err.callback(message, ...err.args);
+    if (err.args) {
+      return err.callback(entity, ...err.args);
+    } else {
+      return err.callback(entity);
+    }
   }
-  return unknown(message, err);
+  return module.exports.unknown(entity, err);
 }

@@ -31,59 +31,106 @@ client.on("message", function(message) {
   }
 
   if (command === "add") {
-    if (!Validators.authorized(message))
-      return Errors.unauthorized(message);
-    if (args.length !== 1)
-      return Errors.bad_arg(message);
-    Actions.add(message, args, 0);
+    Validators.authorized(message)
+    .then((success) => {
+      if (args.length !== 1)
+        return Errors.bad_arg(message);
+      Actions.add(message, args, 0);
+    })
+    .catch((err) => Errors.handle(message, err));
   }
 
   else if (command === "add-discord") {
-    if (!Validators.authorized(message))
-      return Errors.unauthorized(message);
-    if (args.length !== 1)
-      return Errors.bad_arg(message);
-    Actions.add(message, args, 1);
+    Validators.authorized(message)
+    .then((success) => {
+      if (args.length !== 1)
+        return Errors.bad_arg(message);
+      Actions.add(message, args, 1);
+    })
+    .catch((err) => Errors.handle(message, err));
   }
 
   else if (command === "remove") {
-    if (!Validators.authorized(message))
-      return Errors.unauthorized(message);
-    if (args.length !== 1)
-      return Errors.bad_arg(message);
-    Actions.remove(message, args);
+    Validators.authorized(message)
+    .then((success) => {
+      if (args.length !== 1)
+        return Errors.bad_arg(message);
+      Actions.remove(message, args);
+    })
+    .catch((err) => Errors.handle(message, err));
   }
 
   else if (command === "level") {
-    if (!Validators.authorized(message))
-      return Errors.unauthorized(message);
-    if (args.length === 0 || args.length % 2 !== 0)
-      return Errors.bad_arg(message);
-    Actions.level(message, args);
+    Validators.authorized(message)
+    .then((success) => {
+      if (args.length === 0 || args.length % 2 !== 0)
+        return Errors.bad_arg(message);
+      Actions.level(message, args);
+    })
+    .catch((err) => Errors.handle(message, err));
   }
 
   else if (command === "blame-war") {
-    if (!Validators.authorized(message))
-      return Errors.unauthorized(message);
-    if (args.length !== 1)
-      return Errors.bad_arg(message);
-    Actions.blame(message, args, 1, 0, `${args[0]} a reçu un blame de guerre.`);
+    Validators.authorized(message)
+    .then((success) => {
+      if (args.length !== 1)
+        return Errors.bad_arg(message);
+      Actions.blame(message, args, 1, 0, `${args[0]} a reçu un blame de guerre.`);
+    })
+    .catch((err) => Errors.handle(message, err));
   }
 
   else if (command === "blame-gauntlet") {
-    if (!Validators.authorized(message))
-      return Errors.unauthorized(message);
-    if (args.length !== 1)
-      return Errors.bad_arg(message);
-    Actions.blame(message, args, 0, 1, `${args[0]} a reçu un blame labyrinthe.`);
+    Validators.authorized(message)
+    .then((success) => {
+      if (args.length !== 1)
+        return Errors.bad_arg(message);
+      Actions.blame(message, args, 0, 1, `${args[0]} a reçu un blame labyrinthe.`);
+    })
+    .catch((err) => Errors.handle(message, err));
   }
 
   else if (command === "repent") {
-    if (!Validators.authorized(message))
-      return Errors.unauthorized(message);
-    if (args.length !== 1)
+    Validators.authorized(message)
+    .then((success) => {
+      if (args.length !== 1)
+        return Errors.bad_arg(message);
+      Actions.repent(message, args);
+    })
+    .catch((err) => Errors.handle(message, err));
+  }
+
+  else if (command === "war") {
+    if (args.length === 0)
       return Errors.bad_arg(message);
-    Actions.repent(message, args);
+
+    Validators.war_channel(message)
+    .then((success) => {
+      if (args[0] === "stop") {
+        return Validators.authorized(message)
+        .then((success) => {
+          if (args.length !== 1)
+            throw {callback: Errors.bad_arg};
+          Actions.stopWar(message);
+        })
+      }
+
+      if (args[0] === "start") {
+        return Validators.authorized(message)
+        .then((success) => {
+          if (args.length > 2)
+            throw {callback: Errors.bad_arg};
+          Actions.startWar(message, args[1]);
+        })
+      }
+
+      if (args[0] === "done") {
+        Actions.doneWar(message);
+      } else if (args[0] === "bye") {
+        Actions.byeWar(message);
+      }
+    })
+    .catch((err) => Errors.handle(message, err));
   }
 });
 
