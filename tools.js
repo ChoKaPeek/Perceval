@@ -2,6 +2,43 @@ const JOUEURS_SID = 1611105066;
 const NIVEAUX_SID = 646100848;
 const BLAMES_SID = 768802987;
 const CELL_SIZE = 13;
+
+module.exports.getRemainingTimeString = function (remain_t) {
+  let str_t = "";
+  const t = new Date(remain_t);
+  if (t.getUTCHours()) {
+    str_t += (t.getUTCHours() === 1) ? "1 heure, " : `${t.getUTCHours()} heures, `;
+  }
+  if (t.getMinutes()) {
+    str_t += (t.getMinutes() === 1) ? "1 minute et " : `${t.getMinutes()} minutes et `;
+  }
+  str_t += (t.getSeconds() === 1) ? "1 seconde" : `${t.getSeconds()} secondes`;
+  return str_t;
+}
+
+/*
+ * Parse time of the form [XXh][XXm][XXs]
+ */
+module.exports.parseWarTime = function (time) {
+  if (!time)
+    return -1;
+
+  let timestamp = 0;
+  const h = time.split("h");
+  if (h.length === 2) {
+    timestamp += 1000 * 60 * 60 * parseInt(h[0].slice(-2), 10);
+  }
+  const m = time.split("m");
+  if (m.length === 2) {
+    timestamp += 1000 * 60 * parseInt(m[0].slice(-2), 10);
+  }
+  const s = time.split("s");
+  if (s.length === 2) {
+    timestamp += 1000 * parseInt(s[0].slice(-2), 10);
+  }
+  return timestamp;
+}
+
 module.exports.findIndex = function (elt, arr) {
   for (let i = 0; i < arr.length; ++i) {
     for (let j = 0; j < arr[i].length; ++j) {

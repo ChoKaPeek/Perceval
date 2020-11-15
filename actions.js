@@ -172,24 +172,7 @@ module.exports.repent = function (message, args) {
 
 module.exports.startWar = function (message, time=undefined) {
   War.initialize(message.channel);
-  if (time) {
-    let timestamp = 0;
-    const h = time.split("h");
-    if (h.length === 2) {
-      timestamp += 1000 * 60 * 60 * parseInt(h[0].slice(-2), 10);
-    }
-    const m = time.split("m");
-    if (m.length === 2) {
-      timestamp += 1000 * 60 * parseInt(m[0].slice(-2), 10);
-    }
-    const s = time.split("s");
-    if (s.length === 2) {
-      timestamp += 1000 * parseInt(s[0].slice(-2), 10);
-    }
-    Cronjobs.register_war_pings(message.channel, timestamp);
-  } else {
-    Cronjobs.register_war_pings(message.channel);
-  }
+  Cronjobs.register_war_pings(message.channel, Tools.parseWarTime(time));
 }
 
 module.exports.stopWar = function (message) {

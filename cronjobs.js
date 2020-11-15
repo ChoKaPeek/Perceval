@@ -2,6 +2,7 @@ const sheets = require("./sheets_api.js").sheets;
 const client = require("./discord_api.js").client;
 const Errors = require('./errors.js');
 const War = require('./war.js');
+const Tools = require('./tools.js');
 
 const COUR_MARTIALE = "773882975707463710";
 const GENERAL = "672432242382995457";
@@ -55,20 +56,6 @@ function wait_first_message(silent=true) {
   }
 }
 
-function get_remaining_time_string(remain_t) {
-  let str_t = "";
-  const t = new Date(remain_t);
-  console.log(t);
-  if (t.getUTCHours()) {
-    str_t += (t.getUTCHours() === 1) ? "1 heure, " : `${t.getUTCHours()} heures, `;
-  }
-  if (t.getMinutes()) {
-    str_t += (t.getMinutes() === 1) ? "1 minute et " : `${t.getMinutes()} minutes et `;
-  }
-  str_t += (t.getSeconds() === 1) ? "1 seconde" : `${t.getSeconds()} secondes`;
-  return str_t;
-}
-
 function ping_war(channel, remain_t) {
   let msg = "";
   const mentionList = War.getMentionList(channel.id);
@@ -79,7 +66,7 @@ function ping_war(channel, remain_t) {
       msg += `Les joueurs ${mentionList.join(", ")} n'ont pas pris part à la guerre.`;
     }
   } else {
-    msg = `La guerre se terminera dans ${get_remaining_time_string(remain_t)}.`;
+    msg = `La guerre se terminera dans ${Tools.getRemainingTimeString(remain_t)}.`;
     if (mentionList.length !== 0) {
       msg += `${War.getMentionList(channel.id).join(", ")}, n'oubliez pas votre combat !
       Une fois effectué tapez \`/war done\`, ou \`/war bye\` si vous n'êtes pas matchés.`;
