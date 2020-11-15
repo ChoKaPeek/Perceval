@@ -87,6 +87,12 @@ client.on("message", function(message) {
     return Errors.bad_arg(message);
   }
 
+  else if (command === "quest") {
+    if (args.length !== 1)
+      return Errors.bad_arg(message);
+    Actions.quest(message, args[0]);
+  }
+
   else if (command === "repent") {
     Validators.authorized(message)
     .then((success) => {

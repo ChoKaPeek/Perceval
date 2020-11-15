@@ -13,18 +13,19 @@ module.exports.help = function (message) {
     - /remove <name>: Retire un joueur de la guilde
     - /level <name> <level>: Enregistre un nouveau niveau IG pour ce joueur
     - /repent <name>: Absout les péchés d'un joueur
+    - /quest <number>: Enregistre un gain de <number> floren par l'auteur du message
     - /show: Affiche les données
     - /gauntlet <action>: Actions disponibles :
         - blame <name>: Blame un joueur pour un labyrinthe
     - /war <action>: Actions disponibles :
         - start [time]: Démarre une guerre, avec pour temps restant 'time'.
                         Le temps restant est lu sous forme [XXh][XXm][XXs].
-                        Il vaut 24 heures par défaut.
-        - stop: Annule une guerre en cours.
+                        Il vaut 24 heures par défaut
+        - stop: Annule une guerre en cours
         - done [mentions]: Si joueurs mentionnés, marque leur combat effectué.
-                           Sinon, c'est le combat de l'auteur.
+                           Sinon, c'est le combat de l'auteur
         - bye [mentions]: Si joueurs mentionnés, désactive leurs notifications.
-                          Sinon, désactive les notifications de l'auteur.
+                          Sinon, désactive les notifications de l'auteur
         - blame <name>: Blame un joueur pour une guerre
     - /roster: Affiche le roster`);
 }
@@ -170,6 +171,26 @@ module.exports.repent = function (message, args) {
 
     const data = res.data.values.filter((row) => row[0] === args[0])[0];
     module.exports.blame(message, args, -parseInt(data[1]), -parseInt(data[2]), `${args[0]} a été pardonné(e) !`);
+  }))
+  .catch((err) => Errors.handle(message, err));
+}
+
+module.exports.quest = function (message, floren) {
+  Validators.exists(message.author.username, 'joueurs!A4:A')
+  .then((success) => sheets.spreadsheets.values.append({
+    spreadsheetId: process.env.SPREADSHEET_ID,
+    range: 'quetes!A:C',
+    valueInputOption: "USER_ENTERED",
+    insertDataOption: "OVERWRITE",
+    resource: {
+      values: [
+        [message.author.username, floren, dateFormat(Date.now(), "dd/mm/yyyy h:MM:ss")]
+      ]
+    }
+  }, (err, res) => {
+    if (err) return Errors.unknown(message, err);
+
+    rangeFormat(message, 'quetes!C:C', `${message.author.username} a gagné ${floren} floren !`);
   }))
   .catch((err) => Errors.handle(message, err));
 }
