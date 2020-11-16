@@ -93,6 +93,7 @@ module.exports.addDiscord = function (message, username, mention) {
 
       message.reply(`${username} est maintenant sur Discord !`);
     }))
+  )
   .catch((err) => Errors.handle(message, err));
 }
 

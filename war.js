@@ -2,11 +2,13 @@ const Tools = require("./tools.js");
 
 const WAR_EARTH = "776150841529860176";
 const WAR_FIRE = "669886787656744970";
+const WAR_ICE = "778024462485946378";
 const ROLE_EARTH = "765916921644187698";
 const ROLE_FIRE = "765916917285781536";
 const ROLE_OFFICIER = "672000544071483399";
+const ROLE_ICE = "765916925724721172";
 
-const WAIT_WAR_CHECKS = [1000*60*60*24, 1000*60*60*12, 1000*60*60*6,
+const WAIT_WAR_CHECKS = [1000*60*60*24-1, 1000*60*60*12, 1000*60*60*6,
   1000*60*60*3, 1000*60*60*1, 1000*60*30, 1000*60*15]
 
 const war = {
@@ -15,24 +17,31 @@ const war = {
     player_list: [],
     done_list: [],
     cronjobs: [],
-    end_time
+    end_time: -1
   },
   fire: {
     role: ROLE_FIRE,
     player_list: [],
     done_list: [],
     cronjobs: [],
-    end_time
+    end_time: -1
+  },
+  ice: {
+    role: ROLE_ICE,
+    player_list: [],
+    done_list: [],
+    cronjobs: [],
+    end_time: -1
   }
 }
 
 function getFaction(channel_id) {
-  if (channel_id === WAR_FIRE) {
+  if (channel_id === WAR_FIRE)
     return war.fire;
-  }
-  if (channel_id === WAR_EARTH) {
+  if (channel_id === WAR_EARTH)
     return war.earth;
-  }
+  if (channel_id === WAR_ICE)
+    return war.ice;
   return null;
 }
 
@@ -47,7 +56,7 @@ function ping_war(channel, remain_t) {
     if (mentionList.length !== 0) {
       msg += '\n' + `Les joueurs ${mentionList.join(", ")} n'ont pas pris part à la guerre.`;
     }
-    msg += '\n' + `<@${ROLE_OFFICIER}>, à vous de jouer !`;
+    msg += '\n' + `<@&${ROLE_OFFICIER}>, à vous de jouer !`;
 
     module.exports.stop(channel.id); // last ping, auto end war
   } else {
@@ -71,11 +80,11 @@ module.exports.initialize = function (channel, time) {
   faction.player_list = channel.guild.members.cache
     .filter((m) => m.roles.cache.has(faction.role)).map((m) => m.id);
 
-  const remain_t = Tools.parseWarTime(time);
-  faction.end_time = Date.now() + remain_t;
+  let remain_t = Tools.parseWarTime(time);
   if (remain_t === -1) {
     remain_t = WAIT_WAR_CHECKS[0];
   }
+  faction.end_time = Date.now() + remain_t;
 
   ping_war(channel, remain_t);
   WAIT_WAR_CHECKS.slice(1).filter((w) => w < remain_t)
@@ -87,11 +96,15 @@ module.exports.initialize = function (channel, time) {
 }
 
 module.exports.stat = function (channel) {
+  const faction = getFaction(channel.id);
+  if (faction.end_time === -1) {
+    return channel.send("Aucune guerre n'a encore eu lieu.");
+  }
   const remain_t = Math.abs(faction.end_time - Date.now());
-  const faction = getFaction(channel_id);
   const usernames = [].concat(faction.player_list.map((id) => [id, false]),
                               faction.done_list.map((id) => [id, true]))
-    .map((p) => [channel.guild.members.cache.get(p[0]).username, p[1]]).sort();
+    .map((p) => [channel.guild.members.cache.get(p[0]).user.username, p[1]])
+    .sort();
 
   let msg = "";
   if (faction.cronjobs.length === 0) {

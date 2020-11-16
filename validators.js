@@ -5,10 +5,13 @@ const Tools = require("./tools.js");
 const ROLE_OFFICIER = "672000544071483399";
 const WAR_EARTH = "776150841529860176";
 const WAR_FIRE = "669886787656744970";
+const WAR_ICE = "778024462485946378";
 
 module.exports.war_channel = function(message) {
   return new Promise((resolve, reject) => {
-    if (message.channel.id !== WAR_EARTH && message.channel.id !== WAR_FIRE) {
+    if (message.channel.id !== WAR_EARTH
+      && message.channel.id !== WAR_FIRE
+      && message.channel.id !== WAR_ICE) {
       return reject({callback: Errors.bad_channel});
     }
     return resolve();
