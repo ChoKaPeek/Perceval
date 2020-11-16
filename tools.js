@@ -3,6 +3,20 @@ const NIVEAUX_SID = 646100848;
 const BLAMES_SID = 768802987;
 const CELL_SIZE = 13;
 
+module.exports.parseNames = function (names, guildMembers) {
+  return names.map((n) => {
+    const match = n.match(/<$(.*)>/g);
+    if (match) {
+      return {username: guildMembers.get(match[0]).username, id: match[0]};
+    }
+    return {username: n, id: 0};
+  });
+}
+
+module.exports.parseName = function (name, guildMembers) {
+  return module.exports.parseNames([name], guildMembers)[0];
+}
+
 module.exports.getRemainingTimeString = function (remain_t) {
   let str_t = "";
   const t = new Date(remain_t);

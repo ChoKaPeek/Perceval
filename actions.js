@@ -8,11 +8,12 @@ const War = require("./war.js");
 
 module.exports.help = function (message) {
   message.reply(`Aide:
-    - /add <name>: Ajoute un joueur In-Game sans discord
-    - /add-discord <name>: Ajoute un joueur In-Game avec discord
-    - /remove <name>: Retire un joueur de la guilde
-    - /level <name> <level>: Enregistre un nouveau niveau IG pour ce joueur
-    - /repent <name>: Absout les péchés d'un joueur
+    - /add <player> [players]: Ajoute un joueur In-Game, par mention ou par nom.
+                               Si pas de mention, le joueur est considéré absent de discord
+    - /add-discord <name> <mention>: Termine un ajout de joueur. Le nom doit déjà exister, et sera associé à la mention
+    - /remove <player>: Retire un joueur de la guilde
+    - /level <player> <level>: Enregistre un nouveau niveau IG pour ce joueur
+    - /repent <player>: Absout les péchés d'un joueur
     - /quest <number>: Enregistre un gain de <number> floren par l'auteur du message
     - /show: Affiche les données
     - /gauntlet <action>: Actions disponibles :
@@ -21,6 +22,7 @@ module.exports.help = function (message) {
         - start [time]: Démarre une guerre, avec pour temps restant 'time'.
                         Le temps restant est lu sous forme [XXh][XXm][XXs].
                         Il vaut 24 heures par défaut
+        - status: Affiche l'état d'une guerre
         - stop: Annule une guerre en cours
         - done [mentions]: Si joueurs mentionnés, marque leur combat effectué.
                            Sinon, c'est le combat de l'auteur
@@ -55,68 +57,68 @@ module.exports.show = function (message, range) {
 }
 
 module.exports.add = function (message, args, discord) {
-  Validators.exists(args[0], 'joueurs!A4:A', false)
-  .then((success) => sheets.spreadsheets.values.append({
-    spreadsheetId: process.env.SPREADSHEET_ID,
-    range: 'joueurs!A:D',
-    valueInputOption: "USER_ENTERED",
-    insertDataOption: "OVERWRITE",
-    resource: {
-      values: [
-        [args[0], discord, dateFormat(Date.now(), "dd/mm/yyyy h:MM:ss")]
-      ]
-    }
-  }, (err, res) => {
-    if (err) return Errors.unknown(message, err);
+  const names = Tools.parseNames(args, message.guild.members.cache);
+  Validators.exist(names, 'joueurs!B4:C', false)
+  .then((success) => {
+    sheets.spreadsheets.values.append({
+      spreadsheetId: process.env.SPREADSHEET_ID,
+      range: 'joueurs!A:E',
+      valueInputOption: "USER_ENTERED",
+      insertDataOption: "OVERWRITE",
+      resource: {
+        values: names.map((n, i) => [success.next_row + i + 4, n.username, n.id, dateFormat(Date.now(), "dd/mm/yyy h:MM:ss")])
+      }
+    }, (err, res) => {
+      if (err) return Errors.unknown(message, err);
 
-    rangeFormat(message, 'joueurs!C:C', `${args[0]} a correctement été ajouté(e) !`);
-  }))
-  .catch((err) => {
-    // handle case where player exists (don't care if already has discord or
-    // not, could be improved)
-    if (discord) {
-      Validators.exists(args[0], 'joueurs!A4:A')
-      .then((success) => sheets.spreadsheets.values.update({
-        spreadsheetId: process.env.SPREADSHEET_ID,
-        range: `joueurs!B${success[0] + 4}:B${success[0] + 4}`,
-        valueInputOption: "USER_ENTERED",
-        resource: {
-          values: [[discord]]
-        },
+      rangeFormat(message, 'joueurs!D:D', `${names.map((n) => n[0]).join(", ")} ont correctement été ajoutés !`);
+    })
+  })
+  .catch((err) => Errors.handle(message, err));
+}
 
-      }, (err, res) => {
-        if (err) return Errors.unknown(message, err);
+module.exports.addDiscord = function (message, username, mention) {
+  const name = Tools.parseName(mention, message.guild.members.cache);
+  Validators.exists(name, 'joueurs!B4:C', false)
+  .then(() => Validators.exists(username, 'joueurs!B4:C')
+    .then((success) => sheets.spreadsheets.values.update({
+      spreadsheetId: process.env.SPREADSHEET_ID,
+      range: `joueurs!C${success.idx[0] + 4}:C${success.idx[0] + 4}`,
+      valueInputOption: "USER_ENTERED",
+      resource: {
+        values: [[name.id]]
+      },
+    }, (err, res) => {
+      if (err) return Errors.unknown(message, err);
 
-        message.reply(`${args[0]} est maintenant sur Discord !`);
-      }))
-      .catch((err) => Errors.handle(message, err));
-    } else {
-      Errors.handle(message, err);
-    }
-  });
+      message.reply(`${username} est maintenant sur Discord !`);
+    }))
+  .catch((err) => Errors.handle(message, err));
 }
 
 module.exports.remove = function (message, args) {
-  Validators.exists(args[0], 'joueurs!A4:A')
+  const name = (args[0].match(/<@(.*)>/g) || [args[0]])[0];
+  Validators.exists(name, 'joueurs!A4:B')
   .then((success) => sheets.spreadsheets.values.update({
     spreadsheetId: process.env.SPREADSHEET_ID,
-    range: `joueurs!D${success[0] + 4}:D${success[0] + 4}`,
+    range: `joueurs!E${success[0] + 4}:E${success[0] + 4}`,
     valueInputOption: "USER_ENTERED",
     resource: {
       values: [[dateFormat(Date.now(), "dd/mm/yyyy h:MM:ss")]]
-    },
-
+    }
   }, (err, res) => {
     if (err) return Errors.unknown(message, err);
 
-    message.reply(`${args[0]} a été retiré(e) de la guilde.`);
+    const username = args[0].match(/<@(.*)>/g) ? message.channel.guild.members.cache.get(args[0].match(/<@(.*)>/g)).username : args[0];
+    message.reply(`${username} a été retiré(e) de la guilde.`);
   }))
   .catch((err) => Errors.handle(message, err));
 }
 
 module.exports.level = function (message, args) {
-  names = args.filter((v, i) => i % 2 === 0)
-  levels = args.filter((v, i) => i % 2 === 1)
+  const arg_names = args.filter((v, i) => i % 2 === 0)
+  const levels = args.filter((v, i) => i % 2 === 1)
+  const names = arg_names.map((arg) => (arg.match(/<@(.*)>/g) || [arg])[0]);
 
   if (levels.filter((v) => isNaN(parseInt(v))).length) {
     return Errors.bad_arg(message);
@@ -195,60 +197,51 @@ module.exports.quest = function (message, floren) {
   .catch((err) => Errors.handle(message, err));
 }
 
+module.exports.statusWar = function (message) {
+  War.stat(message.channel);
+}
+
 module.exports.startWar = function (message, time=undefined) {
-  War.initialize(message.channel);
-  Cronjobs.register_war_pings(message.channel, Tools.parseWarTime(time));
+  if (!War.initialize(message.channel, time)) {
+    return Errors.war_in_progress(message);
+  }
 }
 
 module.exports.stopWar = function (message) {
-  if (!Cronjobs.stop_war()) {
+  if (!War.stop(message.channel.id)) {
     return Errors.no_war(message);
   }
   message.reply(`La guerre a été correctement annulée.`);
 }
 
-module.exports.doneWar = function (message, args) {
+module.exports.doneWar = function (message, args, matched) {
   const ids = Array.from(message.mentions.users.keys());
-  if (ids.length) {
-    if (args.length !== ids.length + 1)
-      return Errors.bad_arg(message);
-    ids.map((id) => {
-      if (!War.done(message.channel.id, id)) {
-        Errors.not_war_listed(message, message.mentions.users.get(id).username);
-      } else {
-        message.reply(`Le combat de ${message.mentions.users.get(id).username} est validé.`);
-      }
-    });
-  } else {
-    if (args.length > 1)
-      return Errors.bad_arg(message);
+
+  if (args.length !== ids.length)
+      return Errors.only_mention(message);
+  if (!War.inProgress(message.channel.id))
+    return Errors.no_war(message);
+
+  if (!ids.length) {
     if (!War.done(message.channel.id, message.author.id)) {
       return Errors.not_war_listed(message);
     }
-    message.reply("Merci pour ta bravoure, soldat !");
+    if (matched)
+      return message.reply("Merci pour ta bravoure, soldat !");
+    return message.reply("Ne t'en fais pas, ton tour viendra !");
   }
-}
 
-module.exports.byeWar = function (message, args) {
-  const ids = Array.from(message.mentions.users.keys());
-  if (ids.length) {
-    if (args.length !== ids.length + 1)
-      return Errors.bad_arg(message);
-    ids.map((id) => {
-      if (!War.done(message.channel.id, id)) {
-        Errors.not_war_listed(message, message.mentions.users.get(id).username);
+  ids.map((id) => {
+    if (!War.done(message.channel.id, id)) {
+      Errors.not_war_listed(message, message.mentions.users.get(id).username);
+    } else {
+      if (matched) {
+        message.reply(`Le combat de ${message.mentions.users.get(id).username} est validé.`);
       } else {
         message.reply(`Les notifications de ${message.mentions.users.get(id).username} sont annulées.`);
       }
-    });
-  } else {
-    if (args.length > 1)
-      return Errors.bad_arg(message);
-    if (!War.done(message.channel.id, message.author.id)) {
-      return Errors.not_war_listed(message);
     }
-    message.reply("Ne t'en fais pas, ton tour viendra !");
-  }
+  });
 }
 
 function rangeFormat(message, range, str) {

@@ -22,17 +22,17 @@ module.exports.authorized = function (message) {
     }
 
     return message.channel.guild.members.fetch()
-    .catch((err) => reject(err))
-    .then((success) => {
-      const member = message.channel.guild.members.cache.get(message.author.id);
-      if (!member) {
-        return reject({callback: Errors.sync_error});
-      }
-      if (member.roles.cache.has(ROLE_OFFICIER)) {
-        return resolve();
-      }
-      return reject({callback: Errors.unauthorized});
-    });
+      .catch((err) => reject(err))
+      .then((success) => {
+        const member = message.channel.guild.members.cache.get(message.author.id);
+        if (!member) {
+          return reject({callback: Errors.sync_error});
+        }
+        if (member.roles.cache.has(ROLE_OFFICIER)) {
+          return resolve();
+        }
+        return reject({callback: Errors.unauthorized});
+      });
   });
 }
 
@@ -46,15 +46,21 @@ module.exports.exists = function (name, range, should_exist=true) {
         console.log('The API returned an error: ' + err);
         return reject({callback: Errors.unknown});
       }
-      const exists = !!res.data.values.flat().filter((c) => c === name).length
-      if (exists === should_exist) {
-        return resolve(Tools.findIndex(name, res.data.values));
-      }
+      const lookup_name = name.id ? name.id : name.username;
+      const exists = !!res.data.values.flat().filter((c) => c === lookup_name).length;
 
-      if (should_exist) {
-        reject({callback: Errors.missing_player, args: [name]})
+      if (exists) {
+        const idx = Tools.findIndex(lookup_name, res.data.values);
+        const username = res.data.values[0][idx[0]];
+        if (should_exist) {
+          return resolve({username, idx});
+        }
+        reject({callback: Errors.player_exists, args: [username]});
       } else {
-        reject({callback: Errors.player_exists, args: [name]})
+        if (should_exist) {
+          return reject({callback: Errors.missing_player, args: [name.username]});
+        }
+        resolve({next_row: res.data.values[0].length});
       }
     });
   });
@@ -73,7 +79,7 @@ module.exports.exist = function (names, range, should_exist=true) {
       const exist = res.data.values.flat().filter((c) => names.includes(c))
       if (should_exist) {
         if (exist.length === names.length) {
-          return resolve(Tools.findIndices(names, res.data.values));
+          return resolve({idx: Tools.findIndices(names, res.data.values)});
         }
         reject({
           callback: Errors.missing_player,
@@ -81,7 +87,7 @@ module.exports.exist = function (names, range, should_exist=true) {
         })
       } else {
         if (exist.length === 0) {
-          return resolve(Tools.findIndices(names, res.data.values));
+          return resolve({next_row: res.data.values[0].length});
         }
         reject({callback: Errors.player_exists, args: [exist]})
       }

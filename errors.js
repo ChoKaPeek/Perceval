@@ -9,6 +9,14 @@ function answer(entity, response) {
   }
 }
 
+module.exports.only_mention = function (entity) {
+  return answer(entity, `Cette commande ne prend que des mentions en argument.`);
+}
+
+module.exports.war_in_progress = function (entity) {
+  return answer(entity, `Une guerre est déjà en cours sur ce canal de discussion.`);
+}
+
 module.exports.no_war = function (entity) {
   return answer(entity, `Il n'y a pas de guerre en cours sur ce canal de discussion.`);
 }

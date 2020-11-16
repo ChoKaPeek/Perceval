@@ -33,8 +33,6 @@ client.on("message", function(message) {
   if (command === "add") {
     Validators.authorized(message)
     .then((success) => {
-      if (args.length !== 1)
-        return Errors.bad_arg(message);
       Actions.add(message, args, 0);
     })
     .catch((err) => Errors.handle(message, err));
@@ -138,9 +136,13 @@ client.on("message", function(message) {
       }
 
       if (args[0] === "done") {
-        Actions.doneWar(message, args);
+        Actions.doneWar(message, args.splice(1), true);
       } else if (args[0] === "bye") {
-        Actions.byeWar(message, args);
+        Actions.doneWar(message, args.splice(1), false);
+      } else if (args[0] === "status") {
+        if (args.length !== 1)
+          return Errors.bad_arg(message);
+        Actions.statusWar(message);
       }
     })
     .catch((err) => Errors.handle(message, err));
