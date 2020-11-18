@@ -203,7 +203,7 @@ module.exports.statusWar = function (message) {
 }
 
 module.exports.startWar = function (message, time=undefined) {
-  if (!War.initialize(message.channel, time)) {
+  if (!War.start(message.channel, time)) {
     return Errors.war_in_progress(message);
   }
 }
