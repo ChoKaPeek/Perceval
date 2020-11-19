@@ -71,7 +71,10 @@ module.exports.add = function (message, args, discord) {
     }, (err, res) => {
       if (err) return Errors.unknown(message, err);
 
-      rangeFormat(message, 'joueurs!D:D', `${names.map((n) => n[0]).join(", ")} ont correctement été ajoutés !`);
+      rangeFormat(message, 'joueurs!D:D',
+        names.length === 1 ? `${names[0][0]} a été correctement ajouté.`
+        : `${names.map((n) => n.username).join(", ")} ont correctement été ajoutés !`
+      );
     })
   })
   .catch((err) => Errors.handle(message, err));
@@ -98,21 +101,22 @@ module.exports.addDiscord = function (message, username, mention) {
 }
 
 module.exports.remove = function (message, args) {
-  const name = (args[0].match(/<@(.*)>/g) || [args[0]])[0];
-  Validators.exists(name, 'joueurs!A4:B')
-  .then((success) => sheets.spreadsheets.values.update({
-    spreadsheetId: process.env.SPREADSHEET_ID,
-    range: `joueurs!E${success[0] + 4}:E${success[0] + 4}`,
-    valueInputOption: "USER_ENTERED",
-    resource: {
-      values: [[dateFormat(Date.now(), "dd/mm/yyyy h:MM:ss")]]
+  const names = Tools.parseNames(args, message.guild.members.cache);
+  Validators.exist(names, 'joueurs!B4:C')
+  .then((res) => Sheets.batchUpdate(names.map((n, i) => {
+    return {
+      request: Sheets.updateCells,
+      range: `joueurs!E${res.idx[i][0] + 4}:E${res.idx[i][0] + 4}`,
+      param: dateFormat(Date.now(), "dd/mm/yyyy h:MM:ss")
     }
-  }, (err, res) => {
-    if (err) return Errors.unknown(message, err);
-
-    const username = args[0].match(/<@(.*)>/g) ? message.channel.guild.members.cache.get(args[0].match(/<@(.*)>/g)).username : args[0];
-    message.reply(`${username} a été retiré(e) de la guilde.`);
-  }))
+  })))
+  .then((res) => {
+    if (names.length === 1) {
+      message.reply(`${names.username} a été retiré(e) de la guilde.`);
+    } else {
+      message.reply(`${names.map((n) => n.username).join(", ")} ont été retirés de la guilde.`);
+    }
+  })
   .catch((err) => Errors.handle(message, err));
 }
 
@@ -248,7 +252,9 @@ module.exports.doneWar = function (message, args, matched) {
 function rangeFormat(message, range, str) {
   sheets.spreadsheets.batchUpdate({
     spreadsheetId: process.env.SPREADSHEET_ID,
-    resource: Tools.rangeDate(range)
+    resource: {
+      requests: [Sheets.formatDate(range)]
+    }
   }, (err, res) => {
     if (err) return Errors.unknown(message, err);
 
