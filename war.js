@@ -1,22 +1,13 @@
 const Tools = require("./tools.js");
+const Const = require("./constants.js");
 const es_client = require("./elastic_api.js").client;
-
-const WAR_EARTH = "776150841529860176";
-const WAR_FIRE = "669886787656744970";
-const WAR_ICE = "778024462485946378";
-const WAR_STORM = "000";
-const ROLE_EARTH = "765916921644187698";
-const ROLE_FIRE = "765916917285781536";
-const ROLE_ICE = "765916925724721172";
-const ROLE_STORM = "000";
-const ROLE_OFFICIER = "672000544071483399";
 
 const WAIT_WAR_CHECKS = [1000*60*60*24-1, 1000*60*60*12, 1000*60*60*6,
   1000*60*60*3, 1000*60*60*1, 1000*60*30, 1000*60*15]
 
 const war = {
   earth: {
-    role: ROLE_EARTH,
+    role: Const.ROLE_EARTH,
     player_list: [],
     done_list: [],
     cronjobs: [],
@@ -24,7 +15,7 @@ const war = {
     channel: null
   },
   fire: {
-    role: ROLE_FIRE,
+    role: Const.ROLE_FIRE,
     player_list: [],
     done_list: [],
     cronjobs: [],
@@ -32,7 +23,7 @@ const war = {
     channel: null
   },
   ice: {
-    role: ROLE_ICE,
+    role: Const.ROLE_ICE,
     player_list: [],
     done_list: [],
     cronjobs: [],
@@ -40,7 +31,7 @@ const war = {
     channel: null
   },
   storm: {
-    role: ROLE_STORM,
+    role: Const.ROLE_STORM,
     player_list: [],
     done_list: [],
     cronjobs: [],
@@ -102,13 +93,13 @@ function setCronjobs(faction) {
 }
 
 function getFaction(channel_id) {
-  if (channel_id === WAR_FIRE)
+  if (channel_id === Const.WAR_FIRE)
     return war.fire;
-  if (channel_id === WAR_EARTH)
+  if (channel_id === Const.WAR_EARTH)
     return war.earth;
-  if (channel_id === WAR_ICE)
+  if (channel_id === Const.WAR_ICE)
     return war.ice;
-  if (channel_id === WAR_STORM)
+  if (channel_id === Const.WAR_STORM)
     return war.storm;
   return null;
 }
@@ -124,7 +115,7 @@ function ping_war(channel, remain_t) {
     if (mentionList.length !== 0) {
       msg += '\n' + `Les joueurs ${mentionList.join(", ")} n'ont pas pris part à la guerre.`;
     }
-    msg += '\n' + `<@&${ROLE_OFFICIER}>, à vous de jouer !`;
+    msg += '\n' + `<@&${Const.ROLE_OFFICIER}>, à vous de jouer !`;
 
     module.exports.stop(channel.id); // last ping, auto end war
   } else {

@@ -1,17 +1,13 @@
 const sheets = require("./sheets_api.js").sheets;
 const Errors = require("./errors.js");
 const Tools = require("./tools.js");
-
-const ROLE_OFFICIER = "672000544071483399";
-const WAR_EARTH = "776150841529860176";
-const WAR_FIRE = "669886787656744970";
-const WAR_ICE = "778024462485946378";
+const Const = require("./constants.js");
 
 module.exports.war_channel = function(message) {
   return new Promise((resolve, reject) => {
-    if (message.channel.id !== WAR_EARTH
-      && message.channel.id !== WAR_FIRE
-      && message.channel.id !== WAR_ICE) {
+    if (message.channel.id !== Const.WAR_EARTH
+      && message.channel.id !== Const.WAR_FIRE
+      && message.channel.id !== Const.WAR_ICE) {
       return reject({callback: Errors.bad_channel});
     }
     return resolve();
@@ -31,7 +27,7 @@ module.exports.authorized = function (message) {
         if (!member) {
           return reject({callback: Errors.sync_error});
         }
-        if (member.roles.cache.has(ROLE_OFFICIER)) {
+        if (member.roles.cache.has(Const.ROLE_OFFICIER)) {
           return resolve();
         }
         return reject({callback: Errors.unauthorized});
