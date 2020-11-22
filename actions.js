@@ -18,12 +18,19 @@ module.exports.help = function (message) {
     - /quest <number>: Enregistre un gain de <number> floren par l'auteur du message
     - /show: Affiche les données
     - /gauntlet <action>: Actions disponibles :
+        - start: Démarre un labyrinthe
+        - status: Affiche l'état du labyrinthe
+        - stop: Annule un labyrinthe en cours
+        - switch [message]: Déclare un switch, suivi d'un optionnel message.
+                            Le dungeon master sera notifié quand nécessaire.
+        - next: Extrait le prochain switch. Si d'autres switchs sont déclarés,
+                prépare le prochain reminder
         - blame <name>: Blame un joueur pour un labyrinthe
     - /war <action>: Actions disponibles :
         - start [time]: Démarre une guerre, avec pour temps restant 'time'.
                         Le temps restant est lu sous forme [XXh][XXm][XXs].
                         Il vaut 24 heures par défaut
-        - status: Affiche l'état d'une guerre
+        - status: Affiche l'état de la guerre
         - stop: Annule une guerre en cours
         - done [mentions]: Si joueurs mentionnés, marque leur combat effectué.
                            Sinon, c'est le combat de l'auteur
