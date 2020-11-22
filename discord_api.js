@@ -10,6 +10,11 @@ const Validators = require("./validators.js");
 
 const prefix = "/";
 
+client.on("ready", () => {
+    client.user.setActivity("Orna", { type: "PLAYING"})
+    console.log("Discord Client ready.");
+})
+
 client.on("message", function(message) {
   if (message.author.bot) return;
   if (!message.content.startsWith(prefix)) return;

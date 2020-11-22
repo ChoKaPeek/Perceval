@@ -5,6 +5,7 @@ const Tools = require("./tools.js");
 const Validators = require("./validators.js");
 const Cronjobs = require("./cronjobs.js");
 const War = require("./war.js");
+const Gauntlet = require("./gauntlet.js");
 
 module.exports.help = function (message) {
   message.reply(`Aide:
@@ -250,7 +251,7 @@ module.exports.doneWar = function (message, args, matched) {
 }
 
 module.exports.statusGauntlet = function (message) {
-  if (!Gauntlet.stat(message.channel)) {
+  if (!Gauntlet.stat(message.channel.id)) {
     return Errors.no_gauntlet(message);
   }
 }
@@ -283,7 +284,7 @@ module.exports.switchGauntlet = function (message, args) {
     return Errors.no_gauntlet(message);
 
   if (!ids.length) {
-    Gauntlet.switch(message.channel.id, message.author.id, args));
+    Gauntlet.switch(message.channel.id, message.author.id, args);
     return message.reply("Ta demande de switch est bien enregistrée.");
   }
 

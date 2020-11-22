@@ -1,7 +1,13 @@
 const elasticsearch = require('elasticsearch');
 
 const bonsai_url = process.env.BONSAI_URL;
-const client = new elasticsearch.Client({host: bonsai_url, log: 'trace'});
+const client = new elasticsearch.Client({
+  host: bonsai_url,
+  log : [{
+    type: 'stdio',
+    levels: ['error', 'warning'] // change these options
+  }]
+});
 
 // Test the connection:
 // Send a HEAD request to "/" and allow

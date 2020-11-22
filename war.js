@@ -1,6 +1,7 @@
 const Tools = require("./tools.js");
 const Const = require("./constants.js");
 const es_client = require("./elastic_api.js").client;
+const discord_client = require("./discord_api.js").client;
 
 const WAIT_WAR_CHECKS = [1000*60*60*24-1, 1000*60*60*12, 1000*60*60*6,
   1000*60*60*3, 1000*60*60*1, 1000*60*30, 1000*60*15]
@@ -53,25 +54,25 @@ function store() {
             player_list: war.earth.player_list,
             done_list: war.earth.done_list,
             end_time: war.earth.end_time,
-            channel: war.earth.channel
+            channel_id: war.earth.channel ? war.earth.channel.id : null,
           },
           fire: {
             player_list: war.fire.player_list,
             done_list: war.fire.done_list,
             end_time: war.fire.end_time,
-            channel: war.fire.channel
+            channel_id: war.fire.channel ? war.fire.channel.id : null,
           },
           ice: {
             player_list: war.ice.player_list,
             done_list: war.ice.done_list,
             end_time: war.ice.end_time,
-            channel: war.ice.channel
+            channel_id: war.ice.channel ? war.ice.channel.id : null,
           },
           storm: {
             player_list: war.storm.player_list,
             done_list: war.storm.done_list,
             end_time: war.storm.end_time,
-            channel: war.storm.channel
+            channel_id: war.storm.channel ? war.storm.channel.id : null,
           }
         }
       }
@@ -230,6 +231,7 @@ async function init() {
   .catch((err) => {
     es_client.indices.create({
       index: "war",
+      ignore: [400]
     })
     .then((success) => es_client.index({
       index: 'war',
@@ -239,25 +241,25 @@ async function init() {
           player_list: [],
           done_list: [],
           end_time: -1,
-          channel: null
+          channel_id: null
         },
         fire: {
           player_list: [],
           done_list: [],
           end_time: -1,
-          channel: null
+          channel_id: null
         },
         ice: {
           player_list: [],
           done_list: [],
           end_time: -1,
-          channel: null
+          channel_id: null
         },
         storm: {
           player_list: [],
           done_list: [],
           end_time: -1,
-          channel: null
+          channel_id: null
         }
       }
     }))
@@ -268,8 +270,17 @@ async function init() {
         war[key].player_list = body._source[key].player_list;
         war[key].done_list = body._source[key].done_list;
         war[key].end_time = body._source[key].end_time;
-        war[key].channel = body._source[key].channel;
-        setCronjobs(war[key]);
+        war[key].channel = null;
+        if (body._source[key].channel_id) {
+          discord_client.on("ready", () => {
+            discord_client.channels.fetch(body._source[key].channel_id)
+              .then((channel) => {
+                war[key].channel = channel;
+                setCronjobs(war[key]);
+              })
+              .catch((err) => console.error(err));
+          });
+        }
       }
     }
   })
