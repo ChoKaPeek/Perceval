@@ -249,6 +249,51 @@ module.exports.doneWar = function (message, args, matched) {
   });
 }
 
+module.exports.statusGauntlet = function (message) {
+  if (!Gauntlet.stat(message.channel)) {
+    return Errors.no_gauntlet(message);
+  }
+}
+
+module.exports.startGauntlet = function (message) {
+  if (!Gauntlet.start(message.channel)) {
+    return Errors.gauntlet_in_progress(message);
+  }
+}
+
+module.exports.stopGauntlet = function (message) {
+  if (!Gauntlet.stop(message.channel.id)) {
+    return Errors.no_gauntlet(message);
+  }
+  message.reply(`Le labyrinthe a été correctement terminé.`);
+}
+
+module.exports.nextGauntlet = function (message) {
+  if (!Gauntlet.next(message)) {
+    return Errors.no_gauntlet(message);
+  }
+}
+
+module.exports.switchGauntlet = function (message, args) {
+  const ids = Array.from(message.mentions.users.keys());
+
+  if (args.length !== ids.length && ids.length)
+    return Errors.only_mention(message);
+  if (!Gauntlet.inProgress(message.channel.id))
+    return Errors.no_gauntlet(message);
+
+  if (!ids.length) {
+    Gauntlet.switch(message.channel.id, message.author.id, args));
+    return message.reply("Ta demande de switch est bien enregistrée.");
+  }
+
+  ids.map((id) => {
+    Gauntlet.switch(message.channel.id, id);
+    message.reply(`La demande de switch de ${message.mentions.users.get(id).username} est enregistrée.`);
+  });
+}
+
+
 function rangeFormat(message, range, str) {
   sheets.spreadsheets.batchUpdate({
     spreadsheetId: process.env.SPREADSHEET_ID,

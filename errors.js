@@ -17,8 +17,16 @@ module.exports.war_in_progress = function (entity) {
   return answer(entity, `Une guerre est déjà en cours sur ce canal de discussion.`);
 }
 
+module.exports.gauntlet_in_progress = function (entity) {
+  return answer(entity, `Un labyrinthe est déjà en cours sur ce canal de discussion.`);
+}
+
 module.exports.no_war = function (entity) {
   return answer(entity, `Il n'y a pas de guerre en cours sur ce canal de discussion.`);
+}
+
+module.exports.no_gauntlet = function (entity) {
+  return answer(entity, `Il n'y a pas de labyrinthe en cours sur ce canal de discussion.`);
 }
 
 module.exports.unknown = function (entity, err=null) {

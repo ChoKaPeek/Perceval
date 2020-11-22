@@ -82,6 +82,45 @@ client.on("message", function(message) {
       .catch((err) => Errors.handle(message, err));
     }
 
+    return Validators.gauntlet_channel(message)
+    .then((success) => {
+      if (args[0] === "stop") {
+        return Validators.authorized(message)
+        .then((success) => {
+          if (args.length !== 1)
+            throw {callback: Errors.bad_arg};
+          Actions.stopGauntlet(message);
+        })
+      }
+
+      if (args[0] === "start") {
+        return Validators.authorized(message)
+        .then((success) => {
+          if (args.length !== 1)
+            throw {callback: Errors.bad_arg};
+          Actions.startGauntlet(message);
+        })
+      }
+
+      if (args[0] === "next") {
+        return Validators.authorized(message)
+        .then((success) => {
+          if (args.length !== 1)
+            throw {callback: Errors.bad_arg};
+          Actions.nextGauntlet(message);
+        })
+      }
+
+      if (args[0] === "switch") {
+        Actions.switchGauntlet(message, args.splice(1));
+      } else if (args[0] === "status") {
+        if (args.length !== 1)
+          return Errors.bad_arg(message);
+        Actions.statusGauntlet(message);
+      }
+    })
+    .catch((err) => Errors.handle(message, err));
+
     return Errors.bad_arg(message);
   }
 

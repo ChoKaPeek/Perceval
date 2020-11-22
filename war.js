@@ -199,8 +199,7 @@ module.exports.done = function (channel_id, user_id) {
     return false;
   }
 
-  faction.done_list.push(faction.player_list[idx]);
-  faction.player_list.splice(idx, 1);
+  faction.done_list.push(faction.player_list.splice(idx, 1)[0]);
 
   store();
   return true;
