@@ -7,6 +7,7 @@ module.exports.client = client;
 const Actions = require("./actions.js");
 const Errors = require("./errors.js");
 const Validators = require("./validators.js");
+const Const = require("./constants.js");
 
 const prefix = "/";
 
@@ -36,7 +37,7 @@ client.on("message", function(message) {
   }
 
   if (command === "add") {
-    Validators.authorized(message)
+    Validators.authorized(message, Const.ROLE_OFFICIER)
     .then((success) => {
       Actions.add(message, args, 0);
     })
@@ -44,7 +45,7 @@ client.on("message", function(message) {
   }
 
   else if (command === "add-discord") {
-    Validators.authorized(message)
+    Validators.authorized(message, Const.ROLE_OFFICIER)
     .then((success) => {
       if (args.length !== 1)
         return Errors.bad_arg(message);
@@ -54,7 +55,7 @@ client.on("message", function(message) {
   }
 
   else if (command === "remove") {
-    Validators.authorized(message)
+    Validators.authorized(message, Const.ROLE_OFFICIER)
     .then((success) => {
       if (args.length !== 1)
         return Errors.bad_arg(message);
@@ -64,7 +65,7 @@ client.on("message", function(message) {
   }
 
   else if (command === "level") {
-    Validators.authorized(message)
+    Validators.authorized(message, Const.ROLE_OFFICIER)
     .then((success) => {
       if (args.length === 0 || args.length % 2 !== 0)
         return Errors.bad_arg(message);
@@ -78,7 +79,7 @@ client.on("message", function(message) {
       return Errors.bad_arg(message);
 
     if (args[0] === "blame") {
-      return Validators.authorized(message)
+      return Validators.authorized(message, Const.ROLE_OFFICIER)
       .then((success) => {
         if (args.length !== 2)
           return Errors.bad_arg(message);
@@ -90,7 +91,7 @@ client.on("message", function(message) {
     return Validators.gauntlet_channel(message)
     .then((success) => {
       if (args[0] === "stop") {
-        return Validators.authorized(message)
+        return Validators.authorized(message, Const.ROLE_OFFICIER)
         .then((success) => {
           if (args.length !== 1)
             throw {callback: Errors.bad_arg};
@@ -99,7 +100,7 @@ client.on("message", function(message) {
       }
 
       if (args[0] === "start") {
-        return Validators.authorized(message)
+        return Validators.authorized(message, Const.ROLE_OFFICIER)
         .then((success) => {
           if (args.length !== 1)
             throw {callback: Errors.bad_arg};
@@ -108,7 +109,7 @@ client.on("message", function(message) {
       }
 
       if (args[0] === "next") {
-        return Validators.authorized(message)
+        return Validators.authorized(message, Const.ROLE_DUNGEON_MASTER)
         .then((success) => {
           if (args.length !== 1)
             throw {callback: Errors.bad_arg};
@@ -136,7 +137,7 @@ client.on("message", function(message) {
   }
 
   else if (command === "repent") {
-    Validators.authorized(message)
+    Validators.authorized(message, Const.ROLE_OFFICIER)
     .then((success) => {
       if (args.length !== 1)
         return Errors.bad_arg(message);
@@ -150,7 +151,7 @@ client.on("message", function(message) {
       return Errors.bad_arg(message);
 
     if (args[0] === "blame") {
-      return Validators.authorized(message)
+      return Validators.authorized(message, Const.ROLE_OFFICIER)
       .then((success) => {
         if (args.length !== 2)
           return Errors.bad_arg(message);
@@ -162,7 +163,7 @@ client.on("message", function(message) {
     return Validators.war_channel(message)
     .then((success) => {
       if (args[0] === "stop") {
-        return Validators.authorized(message)
+        return Validators.authorized(message, Const.ROLE_OFFICIER)
         .then((success) => {
           if (args.length !== 1)
             throw {callback: Errors.bad_arg};
@@ -171,7 +172,7 @@ client.on("message", function(message) {
       }
 
       if (args[0] === "start") {
-        return Validators.authorized(message)
+        return Validators.authorized(message, Const.ROLE_OFFICIER)
         .then((success) => {
           if (args.length > 2)
             throw {callback: Errors.bad_arg};

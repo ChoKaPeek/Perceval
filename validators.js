@@ -27,7 +27,7 @@ module.exports.gauntlet_channel = function(message) {
   });
 }
 
-module.exports.authorized = function (message) {
+module.exports.authorized = function (message, role) {
   return new Promise((resolve, reject) => {
     if (message.channel.type === "dm") {
       return reject({callback: Errors.bad_channel});
@@ -40,7 +40,7 @@ module.exports.authorized = function (message) {
         if (!member) {
           return reject({callback: Errors.sync_error});
         }
-        if (member.roles.cache.has(Const.ROLE_OFFICIER)) {
+        if (member.roles.cache.has(role)) {
           return resolve();
         }
         return reject({callback: Errors.unauthorized});
