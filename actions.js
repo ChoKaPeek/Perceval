@@ -236,17 +236,22 @@ module.exports.doneWar = function (message, args, matched) {
     return Errors.no_war(message);
 
   if (!ids.length) {
-    if (!War.done(message.channel.id, message.author.id)) {
+    ret = War.done(message.channel.id, message.author.id);
+    if (ret === 1)
       return Errors.not_war_listed(message);
-    }
+    if (ret === 2)
+      return Errors.already_done(message);
     if (matched)
       return message.reply("Merci pour ta bravoure, soldat !");
     return message.reply("Ne t'en fais pas, ton tour viendra !");
   }
 
   ids.map((id) => {
-    if (!War.done(message.channel.id, id)) {
+    ret = War.done(message.channel.id, id);
+    if (ret === 1) {
       Errors.not_war_listed(message, message.mentions.users.get(id).username);
+    } else if (ret === 2) {
+      Errors.already_done(message, message.mentions.users.get(id).username);
     } else {
       if (matched) {
         message.reply(`Le combat de ${message.mentions.users.get(id).username} est validé.`);

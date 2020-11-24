@@ -197,13 +197,15 @@ module.exports.done = function (channel_id, user_id) {
   const faction = getFaction(channel_id);
   const idx = faction.player_list.findIndex((p) => p === user_id);
   if (idx === -1) {
-    return false;
+    if (faction.done_list.findIndex((p) => p === user_id) !== -1)
+      return 2;
+    return 1;
   }
 
   faction.done_list.push(faction.player_list.splice(idx, 1)[0]);
 
   store();
-  return true;
+  return 0;
 }
 
 function getMentionList(list) {

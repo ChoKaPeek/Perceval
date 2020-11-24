@@ -44,6 +44,13 @@ module.exports.sync_error = function (entity) {
   return answer(entity, `Erreur de lecture d'éléments discord. Contactez ${admin} pour résoudre le problème.`);
 }
 
+module.exports.already_done = function (entity, name=null) {
+  if (name)
+    return answer(entity, `${name} a déjà effectué cette action.`);
+
+  return answer(entity, `Tu as déjà effectué cette action.`);
+}
+
 module.exports.not_war_listed = function (entity, name=null) {
   if (name)
     return answer(entity, `${name} n'est pas listé(e) dans cette guerre.`);
