@@ -16,6 +16,18 @@ client.on("ready", () => {
     console.log("Discord Client ready.");
 })
 
+client.on('messageReactionAdd', (react, user) => {
+  if (user.bot) return;
+
+  if (react.emoji.name === '\u{2705}') { // white_check_mark
+    return Validators.war_channel(react.message)
+    .then(() => {
+      react.users.remove(user.id);
+      return Actions.doneWarEmoji(react, user);
+    });
+  }
+});
+
 client.on("message", function(message) {
   if (message.author.bot) return;
   if (!message.content.startsWith(prefix)) return;
@@ -190,6 +202,7 @@ client.on("message", function(message) {
         Actions.statusWar(message);
       }
     })
+    .then(() => message.delete())
     .catch((err) => Errors.handle(message, err));
 
     return Errors.bad_arg(message);

@@ -9,6 +9,7 @@ const WAIT_WAR_CHECKS = [1000*60*60*24-1, 1000*60*60*12, 1000*60*60*6,
 const war = {
   earth: {
     role: Const.ROLE_EARTH,
+    status: null,
     player_list: [],
     done_list: [],
     cronjobs: [],
@@ -17,6 +18,7 @@ const war = {
   },
   fire: {
     role: Const.ROLE_FIRE,
+    status: null,
     player_list: [],
     done_list: [],
     cronjobs: [],
@@ -25,6 +27,7 @@ const war = {
   },
   ice: {
     role: Const.ROLE_ICE,
+    status: null,
     player_list: [],
     done_list: [],
     cronjobs: [],
@@ -33,6 +36,7 @@ const war = {
   },
   storm: {
     role: Const.ROLE_STORM,
+    status: null,
     player_list: [],
     done_list: [],
     cronjobs: [],
@@ -52,24 +56,28 @@ function store() {
         params: {
           earth: {
             player_list: war.earth.player_list,
+            status_id: war.earth.status ? war.earth.status.id : null,
             done_list: war.earth.done_list,
             end_time: war.earth.end_time,
             channel_id: war.earth.channel ? war.earth.channel.id : null,
           },
           fire: {
             player_list: war.fire.player_list,
+            status_id: war.fire.status ? war.fire.status.id : null,
             done_list: war.fire.done_list,
             end_time: war.fire.end_time,
             channel_id: war.fire.channel ? war.fire.channel.id : null,
           },
           ice: {
             player_list: war.ice.player_list,
+            status_id: war.ice.status ? war.ice.status.id : null,
             done_list: war.ice.done_list,
             end_time: war.ice.end_time,
             channel_id: war.ice.channel ? war.ice.channel.id : null,
           },
           storm: {
             player_list: war.storm.player_list,
+            status_id: war.storm.status ? war.storm.status.id : null,
             done_list: war.storm.done_list,
             end_time: war.storm.end_time,
             channel_id: war.storm.channel ? war.storm.channel.id : null,
@@ -119,6 +127,7 @@ function ping_war(channel, remain_t) {
     msg += '\n' + `<@&${Const.ROLE_OFFICIER}>, à vous de jouer !`;
 
     module.exports.stop(channel.id); // last ping, auto end war
+    module.exports.stat(channel);
   } else {
     msg = `La guerre se terminera dans ${Tools.getRemainingTimeString(remain_t)}.`;
     if (mentionList.length !== 0) {
@@ -128,6 +137,13 @@ Une fois effectué tapez \`/war done\`, ou \`/war bye\` si vous n'êtes pas matc
   }
 
   channel.send(msg);
+}
+
+module.exports.isMessageStatus = function (message) {
+  const faction = getFaction(message.channel.id);
+  if (!faction.status)
+    return false;
+  return message.id === faction.status.id;
 }
 
 module.exports.start = function (channel, time) {
@@ -157,7 +173,7 @@ module.exports.start = function (channel, time) {
   return true;
 }
 
-module.exports.stat = function (channel) {
+module.exports.stat = function (channel, overwrite=true) {
   const faction = getFaction(channel.id);
   if (faction.end_time === -1) {
     return channel.send("Aucune guerre n'a encore eu lieu.");
@@ -177,7 +193,17 @@ module.exports.stat = function (channel) {
 
   msg += '\n' + `${usernames.map((u) => (u[1] ? ":white_check_mark: " : ":x: ") + u[0]).join(" | ")}`;
 
-  channel.send(msg);
+  if (faction.status) {
+    if (!overwrite) {
+      return faction.status.edit(msg);
+    }
+    faction.status.delete();
+    faction.status = null;
+  }
+  channel.send(msg).then((status) => {
+    status.react("\u{2705}");
+    faction.status = status;
+  });
 }
 
 module.exports.stop = function (channel_id) {
@@ -273,12 +299,22 @@ async function init() {
         war[key].done_list = body._source[key].done_list;
         war[key].end_time = body._source[key].end_time;
         war[key].channel = null;
+        war[key].status = null;
         if (body._source[key].channel_id) {
           discord_client.on("ready", () => {
             discord_client.channels.fetch(body._source[key].channel_id)
               .then((channel) => {
                 war[key].channel = channel;
                 setCronjobs(war[key]);
+              })
+              .then(() => {
+                if (body._source[key].status_id) {
+                  return war[key].channel.messages.fetch(body._source[key].status_id)
+                  .then((status) => {
+                    war[key].status = status;
+                    module.exports.stat(war[key].channel);
+                  });
+                }
               })
               .catch((err) => console.error(err));
           });

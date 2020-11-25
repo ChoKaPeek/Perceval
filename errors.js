@@ -83,10 +83,13 @@ module.exports.bad_arg = function (entity) {
 module.exports.handle = function (entity, err) {
   if (err.callback) {
     if (err.args) {
-      return err.callback(entity, ...err.args);
-    } else {
-      return err.callback(entity);
+      try {
+        return err.callback(entity, ...err.args);
+      } catch (error) {
+        return err.callback(entity);
+      }
     }
+    return err.callback(entity);
   }
   return module.exports.unknown(entity, err);
 }
