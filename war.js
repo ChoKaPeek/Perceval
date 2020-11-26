@@ -267,24 +267,28 @@ async function init() {
       body: {
         earth: {
           player_list: [],
+          status_id: null,
           done_list: [],
           end_time: -1,
           channel_id: null
         },
         fire: {
           player_list: [],
+          status_id: null,
           done_list: [],
           end_time: -1,
           channel_id: null
         },
         ice: {
           player_list: [],
+          status_id: null,
           done_list: [],
           end_time: -1,
           channel_id: null
         },
         storm: {
           player_list: [],
+          status_id: null,
           done_list: [],
           end_time: -1,
           channel_id: null
