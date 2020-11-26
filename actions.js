@@ -218,20 +218,17 @@ module.exports.startWar = function (message, time=undefined) {
   if (!War.start(message.channel, time)) {
     return Errors.war_in_progress(message);
   }
-  War.stat(message.channel);
 }
 
 module.exports.stopWar = function (message) {
-  if (!War.stop(message.channel.id)) {
+  if (!War.stop(message.channel)) {
     return Errors.no_war(message);
   }
-  War.stat(message.channel);
 }
 
 module.exports.doneWarEmoji = function (react, user) {
   if (War.isMessageStatus(react.message)) {
     War.done(react.message.channel.id, user.id);
-    return War.stat(react.message.channel);
   }
 }
 
@@ -249,7 +246,7 @@ module.exports.doneWar = function (message, args, matched) {
       return Errors.not_war_listed(message);
     if (ret === 2)
       return Errors.already_done(message);
-    return War.stat(message.channel);
+    return;
   }
 
   ids.map((id) => {
@@ -260,7 +257,6 @@ module.exports.doneWar = function (message, args, matched) {
       Errors.already_done(message, message.mentions.users.get(id).username);
     }
   });
-  War.stat(message.channel);
 }
 
 module.exports.statusGauntlet = function (message) {

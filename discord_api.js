@@ -25,6 +25,12 @@ client.on('messageReactionAdd', (react, user) => {
       react.users.remove(user.id);
       return Actions.doneWarEmoji(react, user);
     });
+  } else if (react.emoji.name === '\u{1F504}') { // arrows_counterclockwise
+    return Validators.war_channel(react.message)
+    .then(() => {
+      react.users.remove(user.id);
+      return Actions.statusWar(react.message);
+    });
   }
 });
 

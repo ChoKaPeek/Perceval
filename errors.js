@@ -31,7 +31,7 @@ module.exports.no_gauntlet = function (entity) {
 
 module.exports.unknown = function (entity, err=null) {
   if (err) {
-    console.log('The API returned an error: ' + err);
+    console.error(err);
   }
   return answer(entity, `Désolé, une erreur s'est produite. Contactez ${admin} pour résoudre le problème.`);
 }

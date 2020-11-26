@@ -126,8 +126,8 @@ function ping_war(channel, remain_t) {
     }
     msg += '\n' + `<@&${Const.ROLE_OFFICIER}>, à vous de jouer !`;
 
-    module.exports.stop(channel.id); // last ping, auto end war
-    module.exports.stat(channel);
+    // last ping, auto end war
+    module.exports.stop(channel);
   } else {
     msg = `La guerre se terminera dans ${Tools.getRemainingTimeString(remain_t)}.`;
     if (mentionList.length !== 0) {
@@ -169,11 +169,11 @@ module.exports.start = function (channel, time) {
 
   faction.end_time = Date.now() + remain_t;
   setCronjobs(faction);
-  store();
+  module.exports.stat(channel);
   return true;
 }
 
-module.exports.stat = function (channel, overwrite=true) {
+module.exports.stat = function (channel, overwrite=true, stop=false) {
   const faction = getFaction(channel.id);
   if (faction.end_time === -1) {
     return channel.send("Aucune guerre n'a encore eu lieu.");
@@ -186,7 +186,7 @@ module.exports.stat = function (channel, overwrite=true) {
 
   let msg = "";
   if (faction.cronjobs.length === 0) {
-    msg = `La guerre est terminée depuis ${Tools.getRemainingTimeString(remain_t)}.`
+    msg = `Cette guerre est terminée depuis ${Tools.getRemainingTimeString(remain_t)}.`
   } else {
     msg = `La guerre se terminera dans ${Tools.getRemainingTimeString(remain_t)}.`
   }
@@ -201,19 +201,26 @@ module.exports.stat = function (channel, overwrite=true) {
     faction.status = null;
   }
   channel.send(msg).then((status) => {
-    status.react("\u{2705}");
-    faction.status = status;
+    if (!stop && faction.cronjobs.length !== 0) {
+      status.react("\u{1F504}")
+      .then(() => status.react("\u{2705}"));
+      faction.status = status;
+      store();
+    }
   });
 }
 
-module.exports.stop = function (channel_id) {
-  const faction = getFaction(channel_id);
+module.exports.stop = function (channel) {
+  const faction = getFaction(channel.id);
   if (faction.cronjobs.length === 0) {
     return false;
   }
   faction.cronjobs.map((j) => clearTimeout(j));
   faction.cronjobs.length = 0;
   faction.end_time = Date.now();
+
+  module.exports.stat(channel, true, true);
+  faction.status = null;
 
   store();
   return true;
@@ -230,7 +237,7 @@ module.exports.done = function (channel_id, user_id) {
 
   faction.done_list.push(faction.player_list.splice(idx, 1)[0]);
 
-  store();
+  module.exports.stat(faction.channel);
   return 0;
 }
 
@@ -316,7 +323,7 @@ async function init() {
                   return war[key].channel.messages.fetch(body._source[key].status_id)
                   .then((status) => {
                     war[key].status = status;
-                    module.exports.stat(war[key].channel);
+                    war[key].channel.guild.members.fetch();
                   });
                 }
               })
