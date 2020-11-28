@@ -11,7 +11,6 @@ const war = {
     role: Const.ROLE_EARTH,
     status: null,
     player_list: [],
-    done_list: [],
     cronjobs: [],
     end_time: -1,
     channel: null
@@ -20,7 +19,6 @@ const war = {
     role: Const.ROLE_FIRE,
     status: null,
     player_list: [],
-    done_list: [],
     cronjobs: [],
     end_time: -1,
     channel: null
@@ -29,7 +27,6 @@ const war = {
     role: Const.ROLE_ICE,
     status: null,
     player_list: [],
-    done_list: [],
     cronjobs: [],
     end_time: -1,
     channel: null
@@ -38,7 +35,6 @@ const war = {
     role: Const.ROLE_STORM,
     status: null,
     player_list: [],
-    done_list: [],
     cronjobs: [],
     end_time: -1,
     channel: null
@@ -57,28 +53,24 @@ function store() {
           earth: {
             player_list: war.earth.player_list,
             status_id: war.earth.status ? war.earth.status.id : null,
-            done_list: war.earth.done_list,
             end_time: war.earth.end_time,
             channel_id: war.earth.channel ? war.earth.channel.id : null,
           },
           fire: {
             player_list: war.fire.player_list,
             status_id: war.fire.status ? war.fire.status.id : null,
-            done_list: war.fire.done_list,
             end_time: war.fire.end_time,
             channel_id: war.fire.channel ? war.fire.channel.id : null,
           },
           ice: {
             player_list: war.ice.player_list,
             status_id: war.ice.status ? war.ice.status.id : null,
-            done_list: war.ice.done_list,
             end_time: war.ice.end_time,
             channel_id: war.ice.channel ? war.ice.channel.id : null,
           },
           storm: {
             player_list: war.storm.player_list,
             status_id: war.storm.status ? war.storm.status.id : null,
-            done_list: war.storm.done_list,
             end_time: war.storm.end_time,
             channel_id: war.storm.channel ? war.storm.channel.id : null,
           }
@@ -117,7 +109,7 @@ function ping_war(channel, remain_t) {
   let msg = "";
   const faction = getFaction(channel.id);
   const mentionList = getMentionList(faction.player_list
-    .filter((p) => !faction.done_list.includes(p)));
+    .filter((p) => p.status === 0));
 
   if (remain_t === 0) {
     msg = "La guerre est terminée.";
@@ -156,9 +148,9 @@ module.exports.start = function (channel, time) {
     faction.channel = channel;
   }
 
-  faction.done_list.length = 0;
   faction.player_list = channel.guild.members.cache
-    .filter((m) => m.roles.cache.has(faction.role)).map((m) => m.id);
+    .filter((m) => m.roles.cache.has(faction.role))
+    .map((m) => {status: 0, id: m.id});
 
   let remain_t = Tools.parseWarTime(time);
   if (remain_t === -1) {
@@ -179,10 +171,9 @@ module.exports.stat = function (channel, overwrite=true, stop=false) {
     return channel.send("Aucune guerre n'a encore eu lieu.");
   }
   const remain_t = Math.abs(faction.end_time - Date.now());
-  const usernames = [].concat(faction.player_list.map((id) => [id, false]),
-                              faction.done_list.map((id) => [id, true]))
-    .map((p) => [channel.guild.members.cache.get(p[0]).user.username, p[1]])
-    .sort();
+  const players = faction.player_list.map((p) => {
+    name: channel.guild.members.cache.get(p.id).user.username, status: p.status
+  }).sort();
 
   let msg = "";
   if (faction.cronjobs.length === 0) {
@@ -191,7 +182,7 @@ module.exports.stat = function (channel, overwrite=true, stop=false) {
     msg = `La guerre se terminera dans ${Tools.getRemainingTimeString(remain_t)}.`
   }
 
-  msg += '\n' + `${usernames.map((u) => (u[1] ? ":white_check_mark: " : ":x: ") + u[0]).join(" | ")}`;
+  msg += '\n' + players.map((p) => (p.status ? (p.status === 1 ? ":white_check_mark: " : ":wave: ") : ":x: ") + p.name).join(" | ");
 
   if (faction.status) {
     if (!overwrite) {
@@ -200,6 +191,7 @@ module.exports.stat = function (channel, overwrite=true, stop=false) {
     faction.status.delete();
     faction.status = null;
   }
+
   channel.send(msg).then((status) => {
     if (!stop && faction.cronjobs.length !== 0) {
       status.react("\u{1F504}")
@@ -230,16 +222,13 @@ module.exports.stop = function (channel) {
 
 module.exports.cancel = function (channel_id, user_id) {
   const faction = getFaction(channel_id);
-  const idx = faction.done_list.findIndex((p) => p === user_id);
-  if (idx === -1) {
-    idx = faction.bye_list.findIndex((p) => p === user_id);
-    if (idx === -1) {
-      return false;
-    }
-    faction.player_list.push(faction.bye_list.splice(idx, 1)[0]);
-  } else {
-    faction.player_list.push(faction.done_list.splice(idx, 1)[0]);
-  }
+  const p = faction.player_list.find((p) => p.id === user_id);
+  if (p === undefined)
+    return 1;
+  if (p.status === 0)
+    return 2;
+
+  p.status = 0;
 
   module.exports.stat(faction.channel);
   return true;
@@ -247,18 +236,16 @@ module.exports.cancel = function (channel_id, user_id) {
 
 module.exports.done = function (channel_id, user_id, done) {
   const faction = getFaction(channel_id);
-  const idx = faction.player_list.findIndex((p) => p === user_id);
-  if (idx === -1) {
-    if (faction.done_list.findIndex((p) => p === user_id) !== -1
-    || faction.bye_list.findIndex((p) => p === user_id) !== -1)
-      return 2;
+  const p = faction.player_list.find((p) => p.id === user_id);
+  if (p === undefined)
     return 1;
-  }
+  if ((done && p.status === 1) || (!done && p.status === 2))
+    return 2;
 
   if (done) {
-    faction.done_list.push(faction.player_list.splice(idx, 1)[0]);
+    p.status = 1;
   } else {
-    faction.bye_list.push(faction.player_list.splice(idx, 1)[0]);
+    p.status = 2;
   }
 
   module.exports.stat(faction.channel);
@@ -266,15 +253,7 @@ module.exports.done = function (channel_id, user_id, done) {
 }
 
 function getMentionList(list) {
-  return list.map((id) => `<@${id}>`);
-}
-
-module.exports.getMentionPlayerList = function (channel_id) {
-  return getMentionList(getFaction(channel_id).player_list);
-}
-
-module.exports.getMentionDoneList = function (channel_id) {
-  return getMentionList(getFaction(channel_id).done_list);
+  return list.map((p) => `<@${p.id}>`);
 }
 
 module.exports.inProgress = function (channel_id) {
@@ -299,28 +278,24 @@ async function init() {
         earth: {
           player_list: [],
           status_id: null,
-          done_list: [],
           end_time: -1,
           channel_id: null
         },
         fire: {
           player_list: [],
           status_id: null,
-          done_list: [],
           end_time: -1,
           channel_id: null
         },
         ice: {
           player_list: [],
           status_id: null,
-          done_list: [],
           end_time: -1,
           channel_id: null
         },
         storm: {
           player_list: [],
           status_id: null,
-          done_list: [],
           end_time: -1,
           channel_id: null
         }
@@ -331,7 +306,6 @@ async function init() {
     if (body) {
       for (const [key, value] of Object.entries(war)) {
         war[key].player_list = body._source[key].player_list;
-        war[key].done_list = body._source[key].done_list;
         war[key].end_time = body._source[key].end_time;
         war[key].channel = null;
         war[key].status = null;
