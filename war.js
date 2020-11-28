@@ -150,7 +150,7 @@ module.exports.start = function (channel, time) {
 
   faction.player_list = channel.guild.members.cache
     .filter((m) => m.roles.cache.has(faction.role))
-    .map((m) => {status: 0, id: m.id});
+    .map((m) => { return {status: 0, id: m.id}});
 
   let remain_t = Tools.parseWarTime(time);
   if (remain_t === -1) {
@@ -171,9 +171,9 @@ module.exports.stat = function (channel, overwrite=true, stop=false) {
     return channel.send("Aucune guerre n'a encore eu lieu.");
   }
   const remain_t = Math.abs(faction.end_time - Date.now());
-  const players = faction.player_list.map((p) => {
+  const players = faction.player_list.map((p) => { return {
     name: channel.guild.members.cache.get(p.id).user.username, status: p.status
-  }).sort();
+  }}).sort();
 
   let msg = "";
   if (faction.cronjobs.length === 0) {
@@ -195,8 +195,8 @@ module.exports.stat = function (channel, overwrite=true, stop=false) {
   channel.send(msg).then((status) => {
     if (!stop && faction.cronjobs.length !== 0) {
       status.react("\u{1F504}")
-      .then(() => status.react("\u{2705}"));
-      .then(() => status.react("\u{1F44B}"));
+      .then(() => status.react("\u{2705}"))
+      .then(() => status.react("\u{1F44B}"))
       .then(() => status.react("\u{274C}"));
       faction.status = status;
       store();
