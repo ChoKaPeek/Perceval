@@ -20,22 +20,28 @@ client.on('messageReactionAdd', (react, user) => {
   if (user.bot) return;
 
   Validators.war_status_message(react.message)
-  .catch(() => {})
   .then(() => {
     if (react.emoji.name === '\u{1F504}') // arrows_counterclockwise
       return Actions.statusWar(react.message);
 
     if (react.emoji.name === '\u{2705}') // white_check_mark
-      return Actions.doneWarEmoji(react, user.id, true);
+      return Actions.warEmoji(react, user.id, "done");
 
     if (react.emoji.name === '\u{1F44B}') // wave
-      return Actions.doneWarEmoji(react, user.id, false);
+      return Actions.warEmoji(react, user.id, "bye");
 
     if (react.emoji.name === '\u{274C}') // red :x:
-      return Actions.cancelWarEmoji(react, user.id);
+      return Actions.warEmoji(react, user.id, "cancel");
 
   })
-  .then(() => react.users.remove(user.id));
+  .then(() => react.users.remove(user.id))
+  .catch((err) => {
+    if (err instanceof Discord.DiscordAPIError
+      && err.httpStatus === 404 && err.method === "delete") {
+      return; // ignore react failed deletion - message surely got deleted
+    }
+    console.error(err);
+  });
 });
 
 client.on("message", function(message) {

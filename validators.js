@@ -44,7 +44,7 @@ module.exports.authorized = function (message, role) {
     }
 
     return message.channel.guild.members.fetch()
-      .catch((err) => reject(err))
+      .catch((err) => reject(err)) // TODO surely useless
       .then((success) => {
         const member = message.channel.guild.members.cache.get(message.author.id);
         if (!member) {

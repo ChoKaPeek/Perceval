@@ -245,7 +245,7 @@ module.exports.doneWar = function (message, args, matched) {
     return Errors.no_war(message);
 
   if (!ids.length) {
-    ret = War.done(message.channel.id, message.author.id);
+    ret = War.done(message.channel.id, message.author.id, matched);
     if (ret === 1)
       return Errors.not_war_listed(message);
     if (ret === 2)
@@ -254,7 +254,7 @@ module.exports.doneWar = function (message, args, matched) {
   }
 
   ids.map((id) => {
-    ret = War.done(message.channel.id, id);
+    ret = War.done(message.channel.id, id, matched);
     if (ret === 1) {
       Errors.not_war_listed(message, message.mentions.users.get(id).username);
     } else if (ret === 2) {

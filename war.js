@@ -6,75 +6,36 @@ const discord_client = require("./discord_api.js").client;
 const WAIT_WAR_CHECKS = [1000*60*60*24-1, 1000*60*60*12, 1000*60*60*6,
   1000*60*60*3, 1000*60*60*1, 1000*60*30, 1000*60*15]
 
-const war = {
-  earth: {
-    role: Const.ROLE_EARTH,
-    status: null,
-    player_list: [],
-    cronjobs: [],
-    end_time: -1,
-    channel: null
-  },
-  fire: {
-    role: Const.ROLE_FIRE,
-    status: null,
-    player_list: [],
-    cronjobs: [],
-    end_time: -1,
-    channel: null
-  },
-  ice: {
-    role: Const.ROLE_ICE,
-    status: null,
-    player_list: [],
-    cronjobs: [],
-    end_time: -1,
-    channel: null
-  },
-  storm: {
-    role: Const.ROLE_STORM,
-    status: null,
-    player_list: [],
-    cronjobs: [],
-    end_time: -1,
-    channel: null
-  }
-}
+const war = Object.fromEntries(Const.FACTION_NAMES.map((n) => [n, {
+  role: Const.roles[n],
+  status: null,
+  players: {},
+  cronjobs: [],
+  end_time: -1,
+  channel: null
+}]));
 
 function store() {
+  const source = Const.FACTION_NAMES
+    .map((n) => 'ctx._source.' + n + '= params.' + n + ';').join(' ');
+
+  const params = Object.fromEntries(Const.FACTION_NAMES
+    .map((n) => [n, {
+      players: war[n].players,
+      status_id: war[n].status ? war[n].status.id : null,
+      end_time: war[n].end_time,
+      channel_id: war[n].channel ? war[n].channel.id : null,
+    }])
+  );
+
   es_client.update({
     index: 'war',
     id: '1',
     body: {
       script: {
         lang: 'painless',
-        source: 'ctx._source.earth = params.earth; ctx._source.fire = params.fire; ctx._source.ice = params.ice; ctx._source.storm = params.storm',
-        params: {
-          earth: {
-            player_list: war.earth.player_list,
-            status_id: war.earth.status ? war.earth.status.id : null,
-            end_time: war.earth.end_time,
-            channel_id: war.earth.channel ? war.earth.channel.id : null,
-          },
-          fire: {
-            player_list: war.fire.player_list,
-            status_id: war.fire.status ? war.fire.status.id : null,
-            end_time: war.fire.end_time,
-            channel_id: war.fire.channel ? war.fire.channel.id : null,
-          },
-          ice: {
-            player_list: war.ice.player_list,
-            status_id: war.ice.status ? war.ice.status.id : null,
-            end_time: war.ice.end_time,
-            channel_id: war.ice.channel ? war.ice.channel.id : null,
-          },
-          storm: {
-            player_list: war.storm.player_list,
-            status_id: war.storm.status ? war.storm.status.id : null,
-            end_time: war.storm.end_time,
-            channel_id: war.storm.channel ? war.storm.channel.id : null,
-          }
-        }
+        source: source,
+        params: params
       }
     }
   });
@@ -108,8 +69,8 @@ function getFaction(channel_id) {
 function ping_war(channel, remain_t) {
   let msg = "";
   const faction = getFaction(channel.id);
-  const mentionList = getMentionList(faction.player_list
-    .filter((p) => p.status === 0));
+  const mentionList = getMentionList(Object.entries(faction.players)
+    .filter(([k, v]) => v === 0).map(([k, v]) => k));
 
   if (remain_t === 0) {
     msg = "La guerre est terminée.";
@@ -148,10 +109,10 @@ module.exports.start = function (channel, time) {
     faction.channel = channel;
   }
 
-  faction.player_list = channel.guild.members.cache
-    .filter((m) => m.roles.cache.has(faction.role))
-    .map((m) => { return {status: 0, id: m.id}});
+  faction.players = Object.fromEntries(channel.guild.members.cache
+    .filter((m) => m.roles.cache.has(faction.role)).map((m) => [m.id, 0]))
 
+  console.log(faction.players)
   let remain_t = Tools.parseWarTime(time);
   if (remain_t === -1) {
     remain_t = WAIT_WAR_CHECKS[0];
@@ -171,9 +132,9 @@ module.exports.stat = function (channel, overwrite=true, stop=false) {
     return channel.send("Aucune guerre n'a encore eu lieu.");
   }
   const remain_t = Math.abs(faction.end_time - Date.now());
-  const players = faction.player_list.map((p) => { return {
-    name: channel.guild.members.cache.get(p.id).user.username, status: p.status
-  }}).sort();
+  const players = Object.entries(faction.players)
+    .map(([k, v]) => [channel.guild.members.cache.get(k).user.username, v])
+    .sort();
 
   let msg = "";
   if (faction.cronjobs.length === 0) {
@@ -182,13 +143,14 @@ module.exports.stat = function (channel, overwrite=true, stop=false) {
     msg = `La guerre se terminera dans ${Tools.getRemainingTimeString(remain_t)}.`
   }
 
-  msg += '\n' + players.map((p) => (p.status ? (p.status === 1 ? ":white_check_mark: " : ":wave: ") : ":x: ") + p.name).join(" | ");
+  msg += '\n' + players.map((p) => (p[1] ? (p[1] === 1 ? ":white_check_mark: " : ":wave: ") : ":x: ") + p[0]).join(" | ");
 
   if (faction.status) {
     if (!overwrite) {
       return faction.status.edit(msg);
     }
-    faction.status.delete();
+    faction.status.delete()
+    .catch((err) => console.error(err)); // TODO test
     faction.status = null;
   }
 
@@ -197,7 +159,8 @@ module.exports.stat = function (channel, overwrite=true, stop=false) {
       status.react("\u{1F504}")
       .then(() => status.react("\u{2705}"))
       .then(() => status.react("\u{1F44B}"))
-      .then(() => status.react("\u{274C}"));
+      .then(() => status.react("\u{274C}"))
+      .catch(() => {}); // Ignore as message probably got deleted
       faction.status = status;
       store();
     }
@@ -222,13 +185,13 @@ module.exports.stop = function (channel) {
 
 module.exports.cancel = function (channel_id, user_id) {
   const faction = getFaction(channel_id);
-  const p = faction.player_list.find((p) => p.id === user_id);
-  if (p === undefined)
+  const k = Object.keys(faction.players).find((k) => k === user_id);
+  if (k === undefined)
     return 1;
-  if (p.status === 0)
+  if (faction.players[k] === 0)
     return 2;
 
-  p.status = 0;
+  faction.players[k] = 0;
 
   module.exports.stat(faction.channel);
   return true;
@@ -236,16 +199,16 @@ module.exports.cancel = function (channel_id, user_id) {
 
 module.exports.done = function (channel_id, user_id, done) {
   const faction = getFaction(channel_id);
-  const p = faction.player_list.find((p) => p.id === user_id);
-  if (p === undefined)
+  const k = Object.keys(faction.players).find((k) => k === user_id);
+  if (k === undefined)
     return 1;
-  if ((done && p.status === 1) || (!done && p.status === 2))
+  if ((done && faction.players[k] === 1) || (!done && faction.players[k] === 2))
     return 2;
 
   if (done) {
-    p.status = 1;
+    faction.players[k] = 1;
   } else {
-    p.status = 2;
+    faction.players[k] = 2;
   }
 
   module.exports.stat(faction.channel);
@@ -253,7 +216,7 @@ module.exports.done = function (channel_id, user_id, done) {
 }
 
 function getMentionList(list) {
-  return list.map((p) => `<@${p.id}>`);
+  return list.map((id) => `<@${id}>`);
 }
 
 module.exports.inProgress = function (channel_id) {
@@ -271,41 +234,20 @@ async function init() {
       index: "war",
       ignore: [400]
     })
-    .then((success) => es_client.index({
-      index: 'war',
-      id: '1',
-      body: {
-        earth: {
-          player_list: [],
-          status_id: null,
-          end_time: -1,
-          channel_id: null
-        },
-        fire: {
-          player_list: [],
-          status_id: null,
-          end_time: -1,
-          channel_id: null
-        },
-        ice: {
-          player_list: [],
-          status_id: null,
-          end_time: -1,
-          channel_id: null
-        },
-        storm: {
-          player_list: [],
-          status_id: null,
-          end_time: -1,
-          channel_id: null
-        }
-      }
-    }))
+    .then((success) => {
+      const body = Object.fromEntries(Const.FACTION_NAMES.map((n) => [n, {
+        players: {},
+        status_id: null,
+        end_time: -1,
+        channel_id: null
+      }]));
+      return es_client.index({index: 'war', id: '1', body: body});
+    });
   })
   .then((body) => {
     if (body) {
-      for (const [key, value] of Object.entries(war)) {
-        war[key].player_list = body._source[key].player_list;
+      Object.keys(war).forEach((key) => {
+        war[key].players = body._source[key].players;
         war[key].end_time = body._source[key].end_time;
         war[key].channel = null;
         war[key].status = null;
@@ -328,7 +270,7 @@ async function init() {
               .catch((err) => console.error(err));
           });
         }
-      }
+      });
     }
   })
   .catch((err) => console.error(err));

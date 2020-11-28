@@ -1,3 +1,5 @@
+const FACTION_NAMES = ['earth', 'fire', 'ice', 'storm'];
+
 const WAR_EARTH = "776150841529860176";
 const WAR_FIRE = "669886787656744970";
 const WAR_ICE = "778024462485946378";
@@ -21,6 +23,7 @@ const NIVEAUX_SID = 646100848;
 const BLAMES_SID = 768802987;
 
 module.exports = {
+  FACTION_NAMES,
   WAR_EARTH,
   WAR_FIRE,
   WAR_ICE,
@@ -29,6 +32,12 @@ module.exports = {
   GAUNTLET_FIRE,
   GAUNTLET_ICE,
   GAUNTLET_STORM,
+  roles: {
+    earth: ROLE_EARTH,
+    fire: ROLE_FIRE,
+    ice: ROLE_ICE,
+    storm: ROLE_STORM
+  },
   ROLE_EARTH,
   ROLE_FIRE,
   ROLE_ICE,

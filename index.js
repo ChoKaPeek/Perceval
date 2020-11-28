@@ -1,3 +1,8 @@
+process.on('unhandledRejection', (reason, p) => {
+  console.log('Unhandled Rejection at: Promise', p, 'reason:', reason.stack);
+  // application specific logging, throwing an error, or other logic here
+});
+
 require('dotenv').config();
 
 require("./sheets_api.js");
