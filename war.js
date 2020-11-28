@@ -141,7 +141,7 @@ Une fois effectué tapez \`/war done\`, ou \`/war bye\` si vous n'êtes pas matc
 
 module.exports.isMessageStatus = function (message) {
   const faction = getFaction(message.channel.id);
-  if (!faction.status)
+  if (!faction || !faction.status)
     return false;
   return message.id === faction.status.id;
 }
@@ -204,6 +204,8 @@ module.exports.stat = function (channel, overwrite=true, stop=false) {
     if (!stop && faction.cronjobs.length !== 0) {
       status.react("\u{1F504}")
       .then(() => status.react("\u{2705}"));
+      .then(() => status.react("\u{1F44B}"));
+      .then(() => status.react("\u{274C}"));
       faction.status = status;
       store();
     }
@@ -226,16 +228,38 @@ module.exports.stop = function (channel) {
   return true;
 }
 
-module.exports.done = function (channel_id, user_id) {
+module.exports.cancel = function (channel_id, user_id) {
+  const faction = getFaction(channel_id);
+  const idx = faction.done_list.findIndex((p) => p === user_id);
+  if (idx === -1) {
+    idx = faction.bye_list.findIndex((p) => p === user_id);
+    if (idx === -1) {
+      return false;
+    }
+    faction.player_list.push(faction.bye_list.splice(idx, 1)[0]);
+  } else {
+    faction.player_list.push(faction.done_list.splice(idx, 1)[0]);
+  }
+
+  module.exports.stat(faction.channel);
+  return true;
+}
+
+module.exports.done = function (channel_id, user_id, done) {
   const faction = getFaction(channel_id);
   const idx = faction.player_list.findIndex((p) => p === user_id);
   if (idx === -1) {
-    if (faction.done_list.findIndex((p) => p === user_id) !== -1)
+    if (faction.done_list.findIndex((p) => p === user_id) !== -1
+    || faction.bye_list.findIndex((p) => p === user_id) !== -1)
       return 2;
     return 1;
   }
 
-  faction.done_list.push(faction.player_list.splice(idx, 1)[0]);
+  if (done) {
+    faction.done_list.push(faction.player_list.splice(idx, 1)[0]);
+  } else {
+    faction.bye_list.push(faction.player_list.splice(idx, 1)[0]);
+  }
 
   module.exports.stat(faction.channel);
   return 0;

@@ -2,16 +2,14 @@ const sheets = require("./sheets_api.js").sheets;
 const Errors = require("./errors.js");
 const Tools = require("./tools.js");
 const Const = require("./constants.js");
+const War = require("./war.js");
 
-module.exports.war_channel = function(message) {
+module.exports.war_status_message = function(message) {
   return new Promise((resolve, reject) => {
-    if (message.channel.id !== Const.WAR_EARTH
-      && message.channel.id !== Const.WAR_FIRE
-      && message.channel.id !== Const.WAR_ICE
-      && message.channel.id !== Const.WAR_STORM) {
-      return reject({callback: Errors.bad_channel});
+    if (War.isMessageStatus(message)) {
+      return resolve();
     }
-    return resolve();
+    return reject();
   });
 }
 

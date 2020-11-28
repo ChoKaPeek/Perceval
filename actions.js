@@ -226,10 +226,14 @@ module.exports.stopWar = function (message) {
   }
 }
 
-module.exports.doneWarEmoji = function (react, user) {
-  if (War.isMessageStatus(react.message)) {
-    War.done(react.message.channel.id, user.id);
-  }
+module.exports.warEmoji = function (react, user_id, action) {
+  if (action === "done")
+    return War.done(react.message.channel.id, user_id, true);
+  if (action === "bye")
+    return War.done(react.message.channel.id, user_id, false);
+  if (action === "cancel")
+    return War.cancel(react.message.channel.id, user_id);
+  return Errors.unknown(react.message, "unknown action " + action);
 }
 
 module.exports.doneWar = function (message, args, matched) {

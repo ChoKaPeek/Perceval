@@ -19,19 +19,23 @@ client.on("ready", () => {
 client.on('messageReactionAdd', (react, user) => {
   if (user.bot) return;
 
-  if (react.emoji.name === '\u{2705}') { // white_check_mark
-    return Validators.war_channel(react.message)
-    .then(() => {
-      react.users.remove(user.id);
-      return Actions.doneWarEmoji(react, user);
-    });
-  } else if (react.emoji.name === '\u{1F504}') { // arrows_counterclockwise
-    return Validators.war_channel(react.message)
-    .then(() => {
-      react.users.remove(user.id);
+  Validators.war_status_message(react.message)
+  .catch(() => {})
+  .then(() => {
+    if (react.emoji.name === '\u{1F504}') // arrows_counterclockwise
       return Actions.statusWar(react.message);
-    });
-  }
+
+    if (react.emoji.name === '\u{2705}') // white_check_mark
+      return Actions.doneWarEmoji(react, user.id, true);
+
+    if (react.emoji.name === '\u{1F44B}') // wave
+      return Actions.doneWarEmoji(react, user.id, false);
+
+    if (react.emoji.name === '\u{274C}') // red :x:
+      return Actions.cancelWarEmoji(react, user.id);
+
+  })
+  .then(() => react.users.remove(user.id));
 });
 
 client.on("message", function(message) {
