@@ -13,6 +13,18 @@ module.exports.war_status_message = function(message) {
   });
 }
 
+module.exports.war_channel = function(message) {
+  return new Promise((resolve, reject) => {
+    if (message.channel.id !== Const.WAR_EARTH
+      && message.channel.id !== Const.WAR_FIRE
+      && message.channel.id !== Const.WAR_ICE
+      && message.channel.id !== Const.WAR_STORM) {
+      return reject({callback: Errors.bad_channel});
+    }
+    return resolve();
+  });
+}
+
 module.exports.gauntlet_channel = function(message) {
   return new Promise((resolve, reject) => {
     if (message.channel.id !== Const.GAUNTLET_EARTH
