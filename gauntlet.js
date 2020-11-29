@@ -5,67 +5,34 @@ const discord_client = require("./discord_api.js").client;
 
 WAIT_GAUNTLET = 1000*60*15;
 
-const gauntlet = {
-  earth: {
-    role: Const.ROLE_EARTH,
+const gauntlet = Object.fromEntries(Const.FACTION_NAMES.map((n) => [n, {
+    role: Const.roles[n],
     queue: [],
     cronjob: null,
     next_reminder: -1,
     channel: null
-  },
-  fire: {
-    role: Const.ROLE_FIRE,
-    queue: [],
-    cronjob: null,
-    next_reminder: -1,
-    channel: null
-  },
-  ice: {
-    role: Const.ROLE_ICE,
-    queue: [],
-    cronjob: null,
-    next_reminder: -1,
-    channel: null
-  },
-  storm: {
-    role: Const.ROLE_STORM,
-    queue: [],
-    cronjob: null,
-    next_reminder: -1,
-    channel: null
-  }
-}
+}]));
 
 function store() {
+  const source = Const.FACTION_NAMES
+    .map((n) => 'ctx._source.' + n + '= params.' + n + ';').join(' ');
+
+  const params = Object.fromEntries(Const.FACTION_NAMES
+    .map((n) => [n, {
+      queue: gauntlet[n].queue,
+      next_reminder: gauntlet[n].next_reminder,
+      channel_id: gauntlet[n].channel ? gauntlet[n].channel.id : null,
+    }])
+  );
+
   es_client.update({
     index: 'gauntlet',
     id: '1',
     body: {
       script: {
         lang: 'painless',
-        source: 'ctx._source.earth = params.earth; ctx._source.fire = params.fire; ctx._source.ice = params.ice; ctx._source.storm = params.storm',
-        params: {
-          earth: {
-            queue: gauntlet.earth.queue,
-            next_reminder: gauntlet.earth.next_reminder,
-            channel_id: gauntlet.earth.channel ? gauntlet.earth.channel.id : null,
-          },
-          fire: {
-            queue: gauntlet.fire.queue,
-            next_reminder: gauntlet.fire.next_reminder,
-            channel_id: gauntlet.fire.channel ? gauntlet.fire.channel.id : null,
-          },
-          ice: {
-            queue: gauntlet.ice.queue,
-            next_reminder: gauntlet.ice.next_reminder,
-            channel_id: gauntlet.ice.channel ? gauntlet.ice.channel.id : null,
-          },
-          storm: {
-            queue: gauntlet.storm.queue,
-            next_reminder: gauntlet.storm.next_reminder,
-            channel_id: gauntlet.storm.channel ? gauntlet.storm.channel.id : null,
-          }
-        }
+        source: source,
+        params: params
       }
     }
   });
@@ -216,36 +183,18 @@ async function init() {
       index: "gauntlet",
       ignore: [400]
     })
-    .then((success) => es_client.index({
-      index: 'gauntlet',
-      id: '1',
-      body: {
-        earth: {
-          queue: [],
-          next_reminder: -1,
-          channel_id: null,
-        },
-        fire: {
-          queue: [],
-          next_reminder: -1,
-          channel_id: null,
-        },
-        ice: {
-          queue: [],
-          next_reminder: -1,
-          channel_id: null,
-        },
-        storm: {
-          queue: [],
-          next_reminder: -1,
-          channel_id: null,
-        }
-      }
-    }))
+    .then((success) => {
+      const body = Object.fromEntries(Const.FACTION_NAMES.map((n) => [n, {
+        queue: [],
+        next_reminder: -1,
+        channel_id: null,
+      }]));
+      return es_client.index({index: 'gauntlet', id: '1', body: body});
+    });
   })
   .then((body) => {
     if (body) {
-      for (const [key, value] of Object.entries(gauntlet)) {
+      Object.keys(gauntlet).forEach((key) => {
         gauntlet[key].queue = body._source[key].queue;
         gauntlet[key].next_reminder = body._source[key].next_reminder;
         gauntlet[key].channel = null;
