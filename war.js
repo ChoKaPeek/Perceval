@@ -145,25 +145,33 @@ module.exports.stat = function (channel, overwrite=true, stop=false) {
 
   msg += '\n' + players.map((p) => (p[1] ? (p[1] === 1 ? ":white_check_mark: " : ":wave: ") : ":x: ") + p[0]).join(" | ");
 
-  if (faction.status) {
-    if (!overwrite) {
-      return faction.status.edit(msg);
-    }
-    faction.status.delete()
-    .catch((err) => console.error(err)); // TODO test
-    faction.status = null;
+  if (faction.status && !overwrite) {
+    return faction.status.edit(msg);
   }
 
-  channel.send(msg).then((status) => {
-    if (!stop && faction.cronjobs.length !== 0) {
-      status.react("\u{1F504}")
-      .then(() => status.react("\u{2705}"))
-      .then(() => status.react("\u{1F44B}"))
-      .then(() => status.react("\u{274C}"))
-      .catch(() => {}); // Ignore as message probably got deleted
-      faction.status = status;
-      store();
+  return channel.messages.fetch({ limit: 1 })
+  .then(messages => {
+    if (faction.status) {
+      // Check if last message is this. No need to delete then, avoid pings
+      if (faction.status.id === messages.first().id) {
+        return faction.status.edit(msg);
+      }
+
+      faction.status.delete();
+      faction.status = null;
     }
+
+    return channel.send(msg).then((status) => {
+      if (!stop && faction.cronjobs.length !== 0) {
+        status.react("\u{1F504}")
+        .then(() => status.react("\u{2705}"))
+        .then(() => status.react("\u{1F44B}"))
+        .then(() => status.react("\u{274C}"))
+        .catch(() => {}); // Ignore as message probably got deleted
+        faction.status = status;
+        store();
+      }
+    });
   });
 }
 
