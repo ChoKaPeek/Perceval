@@ -142,7 +142,7 @@ module.exports.stat = function (channel, level=-1, overwrite=true, stop=false) {
   const faction = getFaction(channel.id);
   let messages = [];
 
-  if (faction.levels.length === 0) {
+  if (faction.levels.length === 0 && !stop) {
     messages.push("Aucun labyrinthe n'est en cours.");
   } else {
     const names = Object.fromEntries(Object.entries(faction.levels)
@@ -194,14 +194,15 @@ module.exports.stop = function (channel_id) {
 
   faction.next_reminder = -1;
 
+  module.exports.stat(faction.channel, -1, true, true);
+
   if (faction.cronjob) {
     clearTimeout(faction.cronjob);
     faction.cronjob = null;
   }
+
   faction.queue.length = 0;
   faction.levels.length = 0;
-
-  module.exports.stat(faction.channel, -1, true, true);
   faction.statuses.length = 0;
 
   store();
