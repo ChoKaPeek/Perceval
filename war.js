@@ -112,7 +112,6 @@ module.exports.start = function (channel, time) {
   faction.players = Object.fromEntries(channel.guild.members.cache
     .filter((m) => m.roles.cache.has(faction.role)).map((m) => [m.id, 0]))
 
-  console.log(faction.players)
   let remain_t = Tools.parseWarTime(time);
   if (remain_t === -1) {
     remain_t = WAIT_WAR_CHECKS[0];
@@ -128,8 +127,8 @@ module.exports.start = function (channel, time) {
 
 module.exports.stat = function (channel, overwrite=true, stop=false) {
   const faction = getFaction(channel.id);
-  if (faction.end_time === -1) {
-    return channel.send("Aucune guerre n'a encore eu lieu.");
+  if (faction.cronjobs.length === 0) {
+    return channel.send("Aucune guerre n'est en cours.");
   }
   const remain_t = Math.abs(faction.end_time - Date.now());
   const players = Object.entries(faction.players)
@@ -138,7 +137,7 @@ module.exports.stat = function (channel, overwrite=true, stop=false) {
 
   let msg = "";
   if (faction.cronjobs.length === 0) {
-    msg = `Cette guerre est terminée depuis ${Tools.getRemainingTimeString(remain_t)}.`
+    msg = `Cette guerre est terminée.`
   } else {
     msg = `La guerre se terminera dans ${Tools.getRemainingTimeString(remain_t)}.`
   }
@@ -146,6 +145,7 @@ module.exports.stat = function (channel, overwrite=true, stop=false) {
   msg += '\n' + players.map((p) => (p[1] ? (p[1] === 1 ? ":white_check_mark: " : ":wave: ") : ":x: ") + p[0]).join(" | ");
 
   if (faction.status && !overwrite) {
+    store();
     return faction.status.edit(msg);
   }
 
@@ -153,7 +153,8 @@ module.exports.stat = function (channel, overwrite=true, stop=false) {
   .then(messages => {
     if (faction.status) {
       // Check if last message is this. No need to delete then, avoid pings
-      if (faction.status.id === messages.first().id) {
+      if (!stop && faction.status.id === messages.first().id) {
+        store();
         return faction.status.edit(msg);
       }
 
@@ -162,7 +163,7 @@ module.exports.stat = function (channel, overwrite=true, stop=false) {
     }
 
     return channel.send(msg).then((status) => {
-      if (!stop && faction.cronjobs.length !== 0) {
+      if (!stop) {
         status.react("\u{1F504}")
         .then(() => status.react("\u{2705}"))
         .then(() => status.react("\u{1F44B}"))
