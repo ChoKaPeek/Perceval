@@ -9,6 +9,8 @@ const Errors = require("./errors.js");
 const Validators = require("./validators.js");
 const Const = require("./constants.js");
 
+class EmojiHandled {};
+
 const prefix = "/";
 
 client.on("ready", () => {
@@ -21,6 +23,8 @@ client.on('messageReactionAdd', (react, user) => {
 
   Validators.war_status_message(react.message)
   .then(() => {
+    react.users.remove(user.id)
+
     if (react.emoji.name === '\u{1F504}') // arrows_counterclockwise
       return Actions.statusWar(react.message);
 
@@ -34,14 +38,37 @@ client.on('messageReactionAdd', (react, user) => {
       return Actions.warEmoji(react, user.id, "cancel");
 
   })
-  .then(() => react.users.remove(user.id))
+  .then(() => {throw new EmojiHandled})
   .catch((err) => {
+    if (err !== undefined)
+      throw err;
+
+    return Validators.gauntlet_status_message(react.message);
+  })
+  .then((success) => {
+    react.users.remove(user.id)
+
+    if (react.emoji.name === '\u{1F504}') // arrows_counterclockwise
+      return Actions.statusGauntlet(react.message);
+
+    if (react.emoji.name === '\u{2705}') // white_check_mark
+      return Actions.gauntletEmoji(react, user.id, "done", success.level);
+
+    if (react.emoji.name === '\u{1F44B}') // wave
+      return Actions.gauntletEmoji(react, user.id, "switch", success.level);
+  })
+  .then(() => {throw new EmojiHandled})
+  .catch((err) => {
+    if (err instanceof EmojiHandled)
+      return;
+
     if (err instanceof Discord.DiscordAPIError
       && err.httpStatus === 404 && err.method === "delete") {
       return; // ignore react failed deletion - message surely got deleted
     }
     console.error(err);
   });
+
 });
 
 client.on("message", function(message) {
@@ -130,14 +157,14 @@ client.on("message", function(message) {
       if (args[0] === "start") {
         return Validators.authorized(message, Const.ROLE_OFFICIER)
         .then((success) => {
-          if (args.length !== 1)
+          if (args.length !== 2 || isNaN(parseInt(args[1])))
             throw {callback: Errors.bad_arg};
-          Actions.startGauntlet(message);
+          Actions.startGauntlet(message, parseInt(args[1]));
         })
       }
 
       if (args[0] === "next") {
-        return Validators.authorized(message, Const.ROLE_DUNGEON_MASTER)
+        return Validators.authorized(message, Const.DUNGEON_MASTER)
         .then((success) => {
           if (args.length !== 1)
             throw {callback: Errors.bad_arg};
@@ -146,7 +173,15 @@ client.on("message", function(message) {
       }
 
       if (args[0] === "switch") {
-        Actions.switchGauntlet(message, args.splice(1));
+        const levels = args.splice(1).map((a) => parseInt(a));
+        if (levels.length === 0 || levels.filter((a) => isNaN(a)).length !== 0)
+          return Errors.bad_arg(message);
+        Actions.switchGauntlet(message, levels);
+      } else if (args[0] === "done") {
+        const levels = args.splice(1).map((a) => parseInt(a));
+        if (levels.length === 0 || levels.filter((a) => isNaN(a)).length !== 0)
+          return Errors.bad_arg(message);
+        Actions.doneGauntlet(message, levels);
       } else if (args[0] === "status") {
         if (args.length !== 1)
           return Errors.bad_arg(message);

@@ -44,6 +44,10 @@ module.exports.sync_error = function (entity) {
   return answer(entity, `Erreur de lecture d'éléments discord. Contactez ${admin} pour résoudre le problème.`);
 }
 
+module.exports.invalid_level = function (entity, level) {
+  return answer(entity, `L'étage ${level} est invalide.`);
+}
+
 module.exports.already_done = function (entity, name=null) {
   if (name)
     return answer(entity, `${name} a déjà effectué cette action.`);

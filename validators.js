@@ -3,13 +3,28 @@ const Errors = require("./errors.js");
 const Tools = require("./tools.js");
 const Const = require("./constants.js");
 const War = require("./war.js");
+const Gauntlet = require("./gauntlet.js");
 
 module.exports.war_status_message = function(message) {
-  return new Promise((resolve, reject) => {
+  return module.exports.war_channel(message)
+  .catch(() => { return Promise.reject() })
+  .then(() => {
     if (War.isMessageStatus(message)) {
-      return resolve();
+      return Promise.resolve();
     }
-    return reject();
+    return Promise.reject();
+  })
+}
+
+module.exports.gauntlet_status_message = function(message) {
+  return module.exports.gauntlet_channel(message)
+  .catch(() => { return Promise.reject() })
+  .then(() => {
+    idx = Gauntlet.getStatusIndex(message);
+    if (idx >= 0) {
+      return Promise.resolve({level: idx - 1});
+    }
+    return Promise.reject();
   });
 }
 

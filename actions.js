@@ -263,14 +263,25 @@ module.exports.doneWar = function (message, args, matched) {
   });
 }
 
+module.exports.gauntletEmoji = function (react, user_id, action, level) {
+  if (action === "done")
+    return Gauntlet.done(react.message.channel.id, user_id, level);
+  if (action === "switch")
+    return Gauntlet.switch(react.message.channel.id, user_id, level);
+  return Errors.unknown(react.message, "unknown action " + action);
+}
+
 module.exports.statusGauntlet = function (message) {
-  if (!Gauntlet.stat(message.channel.id)) {
+  if (!Gauntlet.stat(message.channel)) {
     return Errors.no_gauntlet(message);
   }
 }
 
-module.exports.startGauntlet = function (message) {
-  if (!Gauntlet.start(message.channel)) {
+module.exports.startGauntlet = function (message, size) {
+  if (size <= 0) {
+    return Errors.bad_arg(message);
+  }
+  if (!Gauntlet.start(message.channel, size)) {
     return Errors.gauntlet_in_progress(message);
   }
 }
@@ -288,23 +299,30 @@ module.exports.nextGauntlet = function (message) {
   }
 }
 
-module.exports.switchGauntlet = function (message, args) {
-  const ids = Array.from(message.mentions.users.keys());
-
-  if (args.length !== ids.length && ids.length)
-    return Errors.only_mention(message);
+module.exports.doneGauntlet = function (message, levels) {
   if (!Gauntlet.inProgress(message.channel.id))
     return Errors.no_gauntlet(message);
 
-  if (!ids.length) {
-    Gauntlet.switch(message.channel.id, message.author.id, args);
-    return message.reply("Ta demande de switch est bien enregistrée.");
-  }
-
-  ids.map((id) => {
-    Gauntlet.switch(message.channel.id, id);
-    message.reply(`La demande de switch de ${message.mentions.users.get(id).username} est enregistrée.`);
+  levels.map((level) => {
+    if (!Gauntlet.done(message.channel.id, message.author.id, level - 1, true))
+      Errors.invalid_level(message, level);
+    else
+      message.reply(`Tu as terminé l'étage ${level} !`);
   });
+  Gauntlet.stat(message.channel);
+}
+
+module.exports.switchGauntlet = function (message, levels) {
+  if (!Gauntlet.inProgress(message.channel.id))
+    return Errors.no_gauntlet(message);
+
+  levels.map((level) => {
+    if (!Gauntlet.switch(message.channel.id, message.author.id, level - 1, true))
+      Errors.invalid_level(message, level);
+    else
+      message.reply(`Ta demande de switch pour l'étage ${level} est bien enregistrée.`);
+  });
+  Gauntlet.stat(message.channel);
 }
 
 
