@@ -272,7 +272,7 @@ module.exports.gauntletEmoji = function (react, user_id, action, level) {
 }
 
 module.exports.statusGauntlet = function (message) {
-  if (!Gauntlet.stat(message.channel)) {
+  if (!Gauntlet.stat(message.channel, -1, true)) {
     return Errors.no_gauntlet(message);
   }
 }

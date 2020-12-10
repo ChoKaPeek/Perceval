@@ -138,20 +138,28 @@ async function recvStatus(faction, source) {
   return faction.channel.guild.members.fetch();
 }
 
-module.exports.stat = function (channel, level=-1, overwrite=true, stop=false) {
+module.exports.stat = function (channel, level=-1, overwrite=false, stop=false) {
   const faction = getFaction(channel.id);
   let messages = [];
 
   if (faction.levels.length === 0 && !stop) {
     messages.push("Aucun labyrinthe n'est en cours.");
   } else {
-    const names = Object.fromEntries(Object.entries(faction.levels)
-      .filter(([k, v]) => v[1] !== null)
-      .map(([k, v]) => [k, channel.guild.members.cache.get(v[1]).user.username])
-    );
-
     messages.push(stop ? "Ce labyrinthe est terminé." : "Un labyrinthe est en cours.");
-    messages = messages.concat(Object.entries(faction.levels).map(([k, v]) => `Étage ${parseInt(k) + 1} : ${v[0] ? (v[0] === 1 ? "Fait" : "Switch demandé") + (v[1] ? " par " + names[k] + "." : ".") : "A faire."}`));
+    messages = messages.concat(Object.entries(faction.levels)
+    .filter(([k, v]) => v[0] !== 1).map(([k, v]) => {
+      let tmp = `Étage ${parseInt(k) + 1} : `;
+      if (v[0] === 0) {
+        tmp += "A faire.";
+      } else if (v[0] === 2) {
+        tmp += "Switch demandé";
+        if (v[1]) {
+          tmp += " par " + channel.guild.members.cache.get(v[1]).user.username;
+        }
+        tmp += ".";
+      }
+      return tmp;
+    }));
 
     if (faction.cronjob !== null) {
       messages.push(`Prochain ping dans ${Tools.getRemainingTimeString(faction.next_reminder - Date.now())}`);
@@ -161,8 +169,15 @@ module.exports.stat = function (channel, level=-1, overwrite=true, stop=false) {
   }
 
   if (faction.statuses.length && !overwrite) {
+    if (faction.levels[level][0] === 1) {
+      faction.statuses[level + 1].delete();
+      faction.statuses.splice(level + 1, 1);
+    } else {
+      if (faction.levels[level][0] === 2)
+        faction.statuses[level + 1].reactions.removeAll();
+      faction.statuses[level + 1].edit(messages[level + 1]);
+    }
     faction.statuses[messages.length - 1].edit(messages[messages.length - 1]);
-    faction.statuses[level + 1].edit(messages[level + 1]);
     return store();
   }
 
@@ -171,8 +186,15 @@ module.exports.stat = function (channel, level=-1, overwrite=true, stop=false) {
     if (faction.statuses.length) {
       // Check if last message is this. No need to delete then, avoid pings
       if (!stop && faction.statuses[faction.statuses.length - 1].id === messages_fetched.first().id) {
+        if (faction.levels[level][0] === 1) {
+          faction.statuses[level + 1].delete();
+          faction.statuses.splice(level + 1, 1);
+        } else {
+          if (faction.levels[level][0] === 2)
+            faction.statuses[level + 1].reactions.removeAll();
+          faction.statuses[level + 1].edit(messages[level + 1]);
+        }
         faction.statuses[messages.length - 1].edit(messages[messages.length - 1]);
-        faction.statuses[level + 1].edit(messages[level + 1]);
         return store();
       }
 
