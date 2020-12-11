@@ -144,8 +144,9 @@ module.exports.stat = function (channel, overwrite=true, stop=false) {
 
   msg += '\n' + players.map((p) => (p[1] ? (p[1] === 1 ? ":white_check_mark: " : ":wave: ") : ":x: ") + p[0]).join(" | ");
 
+  store();
+
   if (faction.status && !overwrite) {
-    store();
     return faction.status.edit(msg);
   }
 
@@ -154,7 +155,6 @@ module.exports.stat = function (channel, overwrite=true, stop=false) {
     if (faction.status) {
       // Check if last message is this. No need to delete then, avoid pings
       if (!stop && faction.status.id === messages.first().id) {
-        store();
         return faction.status.edit(msg);
       }
 
@@ -170,8 +170,8 @@ module.exports.stat = function (channel, overwrite=true, stop=false) {
         .then(() => status.react("\u{274C}"))
         .catch(() => {}); // Ignore as message probably got deleted
         faction.status = status;
-        store();
       }
+      store();
     });
   });
 }
@@ -187,7 +187,7 @@ module.exports.stop = function (channel) {
   faction.cronjobs.map((j) => clearTimeout(j));
   faction.cronjobs.length = 0;
   faction.end_time = Date.now();
-  faction.status = null;
+  // faction.status is deleted by stat()
 
   store();
   return true;
