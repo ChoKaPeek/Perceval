@@ -136,7 +136,7 @@ module.exports.stat = function (channel, overwrite=true, stop=false) {
     .sort();
 
   let msg = "";
-  if (faction.cronjobs.length === 0) {
+  if (stop) {
     msg = `Cette guerre est terminée.`
   } else {
     msg = `La guerre se terminera dans ${Tools.getRemainingTimeString(remain_t)}.`
@@ -181,11 +181,12 @@ module.exports.stop = function (channel) {
   if (faction.cronjobs.length === 0) {
     return false;
   }
+
+  module.exports.stat(channel, true, true);
+
   faction.cronjobs.map((j) => clearTimeout(j));
   faction.cronjobs.length = 0;
   faction.end_time = Date.now();
-
-  module.exports.stat(channel, true, true);
   faction.status = null;
 
   store();
