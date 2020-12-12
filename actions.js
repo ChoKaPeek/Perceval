@@ -7,37 +7,91 @@ const Cronjobs = require("./cronjobs.js");
 const War = require("./war.js");
 const Gauntlet = require("./gauntlet.js");
 
+module.exports.helpGauntlet = function (message) {
+  message.reply(`Aide module Labyrinthe (\`/gaunt <arg>\`):
+    - start <number>:
+        Démarre un labyrinthe en spécifiant son nombre d'étages
+    - status:
+        Affiche l'état du labyrinthe
+    - stop:
+        Annule un labyrinthe en cours
+    - done <number>:
+        Déclare l'étage numéro <number> effectué.
+    - switch <number>:
+        Déclare un switch pour l'étage numéro <number>.
+        Le Dungeon Master sera notifié en temps et en heure.
+    - next:
+        Extrait le prochain switch. Si d'autres switchs sont déclarés,
+        prépare le prochain ping. Commande réservée au Dungeon Master.
+    - blame <name>:
+        Blame un joueur pour un labyrinthe
+
+Réactions disponibles :
+    - \u{1F504}: équivalent à \`/gaunt status\`
+    - \u{2705}: équivalent à \`/gaunt done\` pour l'étage choisi
+    - \u{1F44B}: équivalent à \`/gaunt switch\` pour l'étage choisi`
+  );
+}
+
+module.exports.helpWar = function (message) {
+  message.reply(`Aide module Guerre (\`/war <arg>\`):
+    - start [time]:
+        Démarre une guerre, avec pour temps restant 'time'.
+        Le temps restant est lu sous forme [XXh][XXm][XXs].
+        Il vaut 24 heures par défaut.
+    - status:
+        Affiche l'état de la guerre
+    - stop:
+        Annule une guerre en cours
+    - done [mentions]:
+        Si joueurs mentionnés, marque leur combat effectué.
+        Sinon, le combat de l'auteur est effectué.
+    - bye [mentions]:
+        Si joueurs mentionnés, désactive leurs notifications.
+        Sinon, désactive les notifications de l'auteur.
+    - blame <name>:
+        Blame un joueur pour une guerre
+
+Réactions disponibles :
+    - \u{1F504}: équivalent à \`/war status\`
+    - \u{2705}: équivalent à \`/war done\`
+    - \u{1F44B}: équivalent à \`/war bye\`
+    - \u{274C}: annule \`/war done\` ou \`/war bye\``
+  );
+}
+
 module.exports.help = function (message) {
   message.reply(`Aide:
-    - /add <player> [players]: Ajoute un joueur In-Game, par mention ou par nom.
-                               Si pas de mention, le joueur est considéré absent de discord
-    - /add-discord <name> <mention>: Termine un ajout de joueur. Le nom doit déjà exister, et sera associé à la mention
-    - /remove <player>: Retire un joueur de la guilde
-    - /level <player> <level>: Enregistre un nouveau niveau IG pour ce joueur
-    - /repent <player>: Absout les péchés d'un joueur
-    - /quest <number>: Enregistre un gain de <number> floren par l'auteur du message
-    - /show: Affiche les données
-    - /gauntlet <action>: Actions disponibles :
-        - start: Démarre un labyrinthe
-        - status: Affiche l'état du labyrinthe
-        - stop: Annule un labyrinthe en cours
-        - switch [message]: Déclare un switch, suivi d'un optionnel message.
-                            Le dungeon master sera notifié quand nécessaire.
-        - next: Extrait le prochain switch. Si d'autres switchs sont déclarés,
-                prépare le prochain reminder
-        - blame <name>: Blame un joueur pour un labyrinthe
-    - /war <action>: Actions disponibles :
-        - start [time]: Démarre une guerre, avec pour temps restant 'time'.
-                        Le temps restant est lu sous forme [XXh][XXm][XXs].
-                        Il vaut 24 heures par défaut
-        - status: Affiche l'état de la guerre
-        - stop: Annule une guerre en cours
-        - done [mentions]: Si joueurs mentionnés, marque leur combat effectué.
-                           Sinon, c'est le combat de l'auteur
-        - bye [mentions]: Si joueurs mentionnés, désactive leurs notifications.
-                          Sinon, désactive les notifications de l'auteur
-        - blame <name>: Blame un joueur pour une guerre
-    - /roster: Affiche le roster`);
+    - /add <player> [players]:
+        Ajoute un joueur In-Game, par mention ou par nom.
+        Si pas de mention, le joueur est considéré absent de discord
+
+    - /add-discord <name> <mention>:
+        Termine un ajout de joueur. Le nom doit déjà exister, et sera associé à la mention
+
+    - /remove <player>:
+        Retire un joueur de la guilde
+
+    - /level <player> <level>:
+        Enregistre un nouveau niveau IG pour ce joueur
+
+    - /repent <player>:
+        Absout les péchés d'un joueur
+
+    - /quest <number>:
+        Enregistre un gain de <number> floren par l'auteur du message
+
+    - /show:
+        Affiche les données
+
+    - /gauntlet:
+        Utiliser \`/help gauntlet\` pour une liste des actions disponibles
+
+    - /war:
+        Utiliser \`/help war\` pour une liste des actions disponibles
+
+    - /roster: Affiche le roster`
+  );
 }
 
 module.exports.show = function (message, range) {
