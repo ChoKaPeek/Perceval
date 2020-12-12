@@ -164,7 +164,7 @@ client.on("message", function(message) {
       }
 
       if (args[0] === "next") {
-        return Validators.authorized(message, Const.DUNGEON_MASTER)
+        return Validators.authorized(message, Const.ROLE_DUNGEON_MASTER)
         .then((success) => {
           if (args.length !== 1)
             throw {callback: Errors.bad_arg};
