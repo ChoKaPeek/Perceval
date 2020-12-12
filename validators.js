@@ -20,9 +20,9 @@ module.exports.gauntlet_status_message = function(message) {
   return module.exports.gauntlet_channel(message)
   .catch(() => { return Promise.reject() })
   .then(() => {
-    idx = Gauntlet.getStatusIndex(message);
-    if (idx >= 0) {
-      return Promise.resolve({level: idx - 1});
+    const level = Gauntlet.getLevel(message);
+    if (level >= -1) {
+      return Promise.resolve({level: level});
     }
     return Promise.reject();
   });

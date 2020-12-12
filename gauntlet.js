@@ -94,35 +94,44 @@ module.exports.start = function (channel, size) {
   }
 
   faction.levels = Object.fromEntries(
-    [...Array(size).keys()].map((k) => [k, [0, null]])
+    [...Array(size).keys()].map((k) => [parseInt(k), [0, null]])
   );
 
   module.exports.stat(channel);
   return true;
 }
 
-module.exports.getStatusIndex = function (message) {
+module.exports.getLevel = function (message) {
+  // not a level is -1, error is -2
   const faction = getFaction(message.channel.id);
   if (!faction || faction.statuses.length === 0)
+    return -2;
+  const idx = faction.statuses.map((s) => s.id).indexOf(message.id);
+  if (idx === -1)
+    return -2;
+  if (idx === 0 || idx == faction.statuses.length - 1)
     return -1;
-  return faction.statuses.map((s) => s.id).indexOf(message.id);
+  return parseInt(Object.entries(faction.levels)
+    .filter(([k, lv]) => lv[0] !== 1)[idx - 1][0]);
 }
 
 async function sendStatus(channel, messages, stop, faction) {
-  for (let i = 0; i < messages.length; ++i) {
-    await channel.send(messages[i]).then((status) => {
-      if (!stop) {
-        if (i === 0) {
-          status.react("\u{1F504}")
-          .catch(() => {});
-        }
+  if (faction.statuses.length !== 0)
+    return null;
 
-        if (i !== 0 && i !== messages.length - 1) {
-          status.react("\u{2705}")
-          .then(() => status.react("\u{1F44B}"))
-          .catch(() => {});
-        }
-        faction.statuses.push(status);
+  for (let i = 0; i < messages.length; ++i) {
+    let tmp_stat = await channel.send(messages[i]);
+    faction.statuses.push(tmp_stat);
+  }
+
+  if (stop) {
+    faction.statuses.length = 0;
+  } else {
+    faction.statuses[0].react("\u{1F504}").catch(() => {});
+    faction.statuses.slice(1, messages.length - 1).forEach((s, i) => {
+      if (faction.levels[i][0] === 0) {
+        return s.react("\u{2705}")
+          .then(() => s.react("\u{1F44B}")).catch(() => {})
       }
     });
   }
@@ -138,63 +147,82 @@ async function recvStatus(faction, source) {
   return faction.channel.guild.members.fetch();
 }
 
+function buildStringLevel(channel, index, level) {
+  if (level[0] === 1)
+    return null;
+
+  let tmp = `Étage ${index + 1} : `;
+
+  if (level[0] === 0)
+    return tmp + "À faire.";
+
+  tmp += "Switch demandé";
+  if (level[1])
+    return tmp + " par " + channel.guild.members.cache
+      .get(level[1]).user.username;
+  return tmp + ".";
+}
+
+function editOneLevel(faction, level, messages) {
+  if (faction.levels[level][0] === 1) {
+    console.log(level + 1)
+    console.log(faction.statuses[level + 1])
+    faction.statuses[level + 1].delete();
+    faction.statuses.splice(level + 1, 1);
+  } else {
+    if (faction.levels[level][0] === 2)
+      faction.statuses[level + 1].reactions.removeAll();
+    faction.statuses[level + 1].edit(messages[0]);
+  }
+  faction.statuses[faction.statuses.length - 1].edit(messages[1]);
+  return;
+}
+
 module.exports.stat = function (channel, level=-1, overwrite=false, stop=false) {
   const faction = getFaction(channel.id);
   let messages = [];
+  level = parseInt(level);
 
   if (faction.levels.length === 0 && !stop) {
-    messages.push("Aucun labyrinthe n'est en cours.");
+    return channel.send("Aucun labyrinthe n'est en cours.");
+  }
+
+  if (level >= 0) {
+    messages.push(buildStringLevel(channel, level, faction.levels[level]));
   } else {
     messages.push(stop ? "Ce labyrinthe est terminé." : "Un labyrinthe est en cours.");
     messages = messages.concat(Object.entries(faction.levels)
-    .filter(([k, v]) => v[0] !== 1).map(([k, v]) => {
-      let tmp = `Étage ${parseInt(k) + 1} : `;
-      if (v[0] === 0) {
-        tmp += "A faire.";
-      } else if (v[0] === 2) {
-        tmp += "Switch demandé";
-        if (v[1]) {
-          tmp += " par " + channel.guild.members.cache.get(v[1]).user.username;
-        }
-        tmp += ".";
-      }
-      return tmp;
-    }));
-
-    if (faction.cronjob !== null) {
-      messages.push(`Prochain ping dans ${Tools.getRemainingTimeString(faction.next_reminder - Date.now())}`);
-    } else {
-      messages.push(`Pas de ping programmé.`);
-    }
+      .filter(([k, v]) => v[0] !== 1)
+      .map(([k, v]) => buildStringLevel(channel, parseInt(k), v))
+    );
   }
 
-  if (faction.statuses.length && !overwrite) {
-    if (faction.levels[level][0] === 1) {
-      faction.statuses[level + 1].delete();
-      faction.statuses.splice(level + 1, 1);
-    } else {
-      if (faction.levels[level][0] === 2)
-        faction.statuses[level + 1].reactions.removeAll();
-      faction.statuses[level + 1].edit(messages[level + 1]);
-    }
-    faction.statuses[messages.length - 1].edit(messages[messages.length - 1]);
+  if (stop) {
+    faction.statuses.forEach((s) => s.delete());
+    faction.statuses.length = 0;
+    return sendStatus(channel, messages, stop, faction);
+  }
+
+  if (faction.queue.length !== 0)
+    let waiting = `Il y a ${faction.queue.length} switchs en attente. `
+
+  if (faction.cronjob !== null) {
+    messages.push(waiting + `Prochain ping dans ${Tools.getRemainingTimeString(faction.next_reminder - Date.now())}`);
+  } else {
+    messages.push(waiting + `Pas de ping programmé.`);
+  }
+
+  if (level >= 0 && faction.statuses.length && !overwrite) {
+    editOneLevel(faction, level, messages);
     return store();
   }
 
   return channel.messages.fetch({ limit: 1 })
-  .then(messages_fetched => {
+  .then((messages_fetched) => {
     if (faction.statuses.length) {
       // Check if last message is this. No need to delete then, avoid pings
-      if (!stop && faction.statuses[faction.statuses.length - 1].id === messages_fetched.first().id) {
-        if (faction.levels[level][0] === 1) {
-          faction.statuses[level + 1].delete();
-          faction.statuses.splice(level + 1, 1);
-        } else {
-          if (faction.levels[level][0] === 2)
-            faction.statuses[level + 1].reactions.removeAll();
-          faction.statuses[level + 1].edit(messages[level + 1]);
-        }
-        faction.statuses[messages.length - 1].edit(messages[messages.length - 1]);
+      if (level >= 0 && faction.statuses[faction.statuses.length - 1].id === messages_fetched.first().id) {
+        editOneLevel(faction, level, messages);
         return store();
       }
 
@@ -225,7 +253,7 @@ module.exports.stop = function (channel_id) {
 
   faction.queue.length = 0;
   faction.levels.length = 0;
-  faction.statuses.length = 0;
+  // faction.statuses deleted by stat()
 
   store();
   return true;
