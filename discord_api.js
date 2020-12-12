@@ -80,7 +80,15 @@ client.on("message", function(message) {
   const command = args.shift().toLowerCase();
 
   if (command === "help") {
-    Actions.help(message);
+    if (args.length === 0)
+      return Actions.help(message);
+    if (args.length === 1) {
+      if (args[0] === "gauntlet")
+        return Actions.helpGauntlet(message);
+      if (args[0] === "war")
+        return Actions.helpWar(message);
+    }
+    return Errors.bad_arg(message);
   }
 
   else if (command === "roster") {
