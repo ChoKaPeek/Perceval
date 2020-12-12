@@ -203,8 +203,9 @@ module.exports.stat = function (channel, level=-1, overwrite=false, stop=false) 
     return sendStatus(channel, messages, stop, faction);
   }
 
+  let waiting = "";
   if (faction.queue.length !== 0)
-    let waiting = `Il y a ${faction.queue.length} switchs en attente. `
+    waiting = `Il y a ${faction.queue.length} switchs en attente. `;
 
   if (faction.cronjob !== null) {
     messages.push(waiting + `Prochain ping dans ${Tools.getRemainingTimeString(faction.next_reminder - Date.now())}`);
