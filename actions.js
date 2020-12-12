@@ -65,32 +65,24 @@ module.exports.help = function (message) {
     - \`/add <player> [players]\`:
         Ajoute un joueur In-Game, par mention ou par nom.
         Si pas de mention, le joueur est considéré absent de discord
-
     - \`/add-discord <name> <mention>\`:
         Termine un ajout de joueur. Le nom doit déjà exister, et sera associé à la mention
-
     - \`/remove <player>\`:
         Retire un joueur de la guilde
-
     - \`/level <player> <level>\`:
         Enregistre un nouveau niveau IG pour ce joueur
-
     - \`/repent <player>\`:
         Absout les péchés d'un joueur
-
     - \`/quest <number>\`:
         Enregistre un gain de <number> floren par l'auteur du message
-
     - \`/show\`:
         Affiche les données
-
     - \`/gauntlet\`:
         Utiliser \`/help gauntlet\` pour une liste des actions disponibles
-
     - \`/war\`:
         Utiliser \`/help war\` pour une liste des actions disponibles
-
-    - \`/roster: Affiche le roster\`:
+    - \`/roster\`:
+        Affiche le roster`
   );
 }
 
