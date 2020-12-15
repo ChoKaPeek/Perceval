@@ -30,7 +30,7 @@ function store() {
 
   es_client.update({
     index: 'war',
-    id: '1',
+    id: process.env.SERVER_UID,
     body: {
       script: {
         lang: 'painless',
@@ -237,7 +237,7 @@ module.exports.inProgress = function (channel_id) {
 async function init() {
   es_client.get({
     index: 'war',
-    id: '1'
+    id: process.env.SERVER_UID
   })
   .catch((err) => {
     es_client.indices.create({
@@ -251,7 +251,7 @@ async function init() {
         end_time: -1,
         channel_id: null
       }]));
-      return es_client.index({index: 'war', id: '1', body: body});
+      return es_client.index({index: 'war', id: process.env.SERVER_UID, body: body});
     });
   })
   .then((body) => {
