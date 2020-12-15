@@ -349,26 +349,30 @@ module.exports.doneGauntlet = function (message, levels) {
   if (!Gauntlet.inProgress(message.channel.id))
     return Errors.no_gauntlet(message);
 
+  const batch = levels.length !== 1;
   levels.map((level) => {
-    if (!Gauntlet.done(message.channel.id, message.author.id, level - 1, true))
+    if (!Gauntlet.done(message.channel.id, message.author.id, level - 1, batch))
       Errors.invalid_level(message, level);
     else
       message.reply(`Tu as terminé l'étage ${level} !`);
   });
-  Gauntlet.stat(message.channel);
+  if (batch)
+    Gauntlet.stat(message.channel);
 }
 
 module.exports.switchGauntlet = function (message, levels) {
   if (!Gauntlet.inProgress(message.channel.id))
     return Errors.no_gauntlet(message);
 
+  const batch = levels.length !== 1;
   levels.map((level) => {
-    if (!Gauntlet.switch(message.channel.id, message.author.id, level - 1, true))
+    if (!Gauntlet.switch(message.channel.id, message.author.id, level - 1, batch))
       Errors.invalid_level(message, level);
     else
       message.reply(`Ta demande de switch pour l'étage ${level} est bien enregistrée.`);
   });
-  Gauntlet.stat(message.channel);
+  if (batch)
+    Gauntlet.stat(message.channel);
 }
 
 
