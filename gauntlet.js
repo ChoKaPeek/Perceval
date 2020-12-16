@@ -9,7 +9,7 @@ const gauntlet = Object.fromEntries(Const.FACTION_NAMES.map((n) => [n, {
     role: Const.roles[n],
     statuses: [],
     queue: [],
-    levels: {},
+    levels: [],
     cronjob: null,
     next_reminder: -1,
     channel: null
@@ -21,7 +21,7 @@ function store() {
 
   const params = Object.fromEntries(Const.FACTION_NAMES
     .map((n) => [n, {
-      status_ids: gauntlet[n].statuses.map((s) => s.id),
+      status_infos: gauntlet[n].statuses.map((s) => [s.id, s.level]),
       queue: gauntlet[n].queue,
       levels: gauntlet[n].levels,
       next_reminder: gauntlet[n].next_reminder,
@@ -93,9 +93,11 @@ module.exports.start = function (channel, size) {
     faction.channel = channel;
   }
 
-  faction.levels = Object.fromEntries(
-    [...Array(size).keys()].map((k) => [parseInt(k), [0, null]])
-  );
+  faction.levels = [];
+  for (let i = 0; i < size; ++i) {
+    faction.levels.push([0, null]);
+  }
+
 
   module.exports.stat(channel);
   return true;
@@ -111,16 +113,20 @@ module.exports.getLevel = function (message) {
     return -2;
   if (idx === 0 || idx == faction.statuses.length - 1)
     return -1;
-  return parseInt(Object.entries(faction.levels)
-    .filter(([k, lv]) => lv[0] !== 1)[idx - 1][0]);
+  return faction.levels[faction.statuses[idx].level];
 }
 
 async function sendStatus(channel, messages, stop, faction) {
   if (faction.statuses.length !== 0)
     return null;
 
+  const levels = [-1];
+  faction.levels.filter((lv) => lv[0] !== 1).forEach((v, i) => levels.push(i));
+  levels.push(-1);
+
   for (let i = 0; i < messages.length; ++i) {
     let tmp_stat = await channel.send(messages[i]);
+    tmp_stat.level = levels[i];
     faction.statuses.push(tmp_stat);
   }
 
@@ -128,8 +134,8 @@ async function sendStatus(channel, messages, stop, faction) {
     faction.statuses.length = 0;
   } else {
     faction.statuses[0].react("\u{1F504}").catch(() => {});
-    faction.statuses.slice(1, messages.length - 1).forEach((s, i) => {
-      if (faction.levels[i][0] === 0) {
+    faction.statuses.slice(1, messages.length - 1).forEach((s) => {
+      if (faction.levels[s.level][0] === 0) {
         return s.react("\u{2705}")
           .then(() => s.react("\u{1F44B}")).catch(() => {})
       }
@@ -139,8 +145,9 @@ async function sendStatus(channel, messages, stop, faction) {
 }
 
 async function recvStatus(faction, source) {
-  for (let i = 0; i < source.status_ids.length; ++i) {
-    await faction.channel.messages.fetch(source.status_ids[i]).then((s) => {
+  for (let i = 0; i < source.status_infos.length; ++i) {
+    await faction.channel.messages.fetch(source.status_infos[i][0]).then((s) => {
+      s.level = source.status_infos[i][1];
       faction.statuses.push(s);
     });
   }
@@ -164,15 +171,15 @@ function buildStringLevel(channel, index, level) {
 }
 
 function editOneLevel(faction, level, messages) {
+  const idx = faction.statuses.findIndex((s) => s.level === level);
+
   if (faction.levels[level][0] === 1) {
-    console.log(level + 1)
-    console.log(faction.statuses[level + 1])
-    faction.statuses[level + 1].delete();
-    faction.statuses.splice(level + 1, 1);
+    faction.statuses[idx].delete();
+    faction.statuses.splice(idx, 1);
   } else {
     if (faction.levels[level][0] === 2)
-      faction.statuses[level + 1].reactions.removeAll();
-    faction.statuses[level + 1].edit(messages[0]);
+      faction.statuses[idx].reactions.removeAll();
+    faction.statuses[idx].edit(messages[0]);
   }
   faction.statuses[faction.statuses.length - 1].edit(messages[1]);
   return;
@@ -180,8 +187,8 @@ function editOneLevel(faction, level, messages) {
 
 module.exports.stat = function (channel, level=-1, overwrite=false, stop=false) {
   const faction = getFaction(channel.id);
+  console.log(faction)
   let messages = [];
-  level = parseInt(level);
 
   if (faction.levels.length === 0 && !stop) {
     return channel.send("Aucun labyrinthe n'est en cours.");
@@ -191,9 +198,8 @@ module.exports.stat = function (channel, level=-1, overwrite=false, stop=false) 
     messages.push(buildStringLevel(channel, level, faction.levels[level]));
   } else {
     messages.push(stop ? "Ce labyrinthe est terminé." : "Un labyrinthe est en cours.");
-    messages = messages.concat(Object.entries(faction.levels)
-      .filter(([k, v]) => v[0] !== 1)
-      .map(([k, v]) => buildStringLevel(channel, parseInt(k), v))
+    messages = messages.concat(faction.levels.filter((v) => v[0] !== 1)
+      .map((v, i) => buildStringLevel(channel, i, v))
     );
   }
 
@@ -345,8 +351,8 @@ async function init() {
     })
     .then((success) => {
       const body = Object.fromEntries(Const.FACTION_NAMES.map((n) => [n, {
-        status_ids: [],
-        levels: {},
+        status_infos: [],
+        levels: [],
         queue: [],
         next_reminder: -1,
         channel_id: null,
@@ -371,7 +377,7 @@ async function init() {
                 store();
               })
               .then(() => {
-                if (body._source[key].status_ids.length) {
+                if (body._source[key].status_infos.length) {
                   return recvStatus(gauntlet[key], body._source[key]);
                 }
               })
