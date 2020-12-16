@@ -81,7 +81,7 @@ module.exports.player_exists = function (entity, name) {
 }
 
 module.exports.bad_arg = function (entity) {
-  return answer(entity, `Arguments invalides. Consultez \`/help\`.`);
+  return answer(entity, `Euuuh, c'est pas faux. *Essaie \`/help\` ?*`);
 }
 
 module.exports.handle = function (entity, err) {
