@@ -21,7 +21,7 @@ function store() {
 
   const params = Object.fromEntries(Const.FACTION_NAMES
     .map((n) => [n, {
-      status_infos: gauntlet[n].statuses.map((s) => [s.id, s.level]),
+      status_infos: gauntlet[n].statuses.map((s) => ({id: s.id, level: s.level})),
       queue: gauntlet[n].queue,
       levels: gauntlet[n].levels,
       next_reminder: gauntlet[n].next_reminder,
@@ -98,7 +98,6 @@ module.exports.start = function (channel, size) {
     faction.levels.push([0, null]);
   }
 
-
   module.exports.stat(channel);
   return true;
 }
@@ -113,16 +112,24 @@ module.exports.getLevel = function (message) {
     return -2;
   if (idx === 0 || idx == faction.statuses.length - 1)
     return -1;
-  return faction.levels[faction.statuses[idx].level];
+  return faction.statuses[idx].level;
 }
 
 async function sendStatus(channel, messages, stop, faction) {
-  if (faction.statuses.length !== 0)
-    return null;
-
   const levels = [-1];
-  faction.levels.filter((lv) => lv[0] !== 1).forEach((v, i) => levels.push(i));
+  if (faction.statuses.length) {
+    faction.statuses
+      .filter((s) => s.level !== -1 && faction.levels[s.level][0] !== 1)
+      .forEach((s) => levels.push(s.level));
+  } else { // start
+    faction.levels.filter((l) => l[0] !== 1)
+      .forEach((l, i) => levels.push(i));
+  }
   levels.push(-1);
+
+  // delete old status information
+  faction.statuses.forEach((s) => s.delete());
+  faction.statuses.length = 0;
 
   for (let i = 0; i < messages.length; ++i) {
     let tmp_stat = await channel.send(messages[i]);
@@ -146,8 +153,8 @@ async function sendStatus(channel, messages, stop, faction) {
 
 async function recvStatus(faction, source) {
   for (let i = 0; i < source.status_infos.length; ++i) {
-    await faction.channel.messages.fetch(source.status_infos[i][0]).then((s) => {
-      s.level = source.status_infos[i][1];
+    await faction.channel.messages.fetch(source.status_infos[i].id).then((s) => {
+      s.level = source.status_infos[i].level;
       faction.statuses.push(s);
     });
   }
@@ -177,8 +184,12 @@ function editOneLevel(faction, level, messages) {
     faction.statuses[idx].delete();
     faction.statuses.splice(idx, 1);
   } else {
-    if (faction.levels[level][0] === 2)
+    if (faction.levels[level][0] === 2) {
       faction.statuses[idx].reactions.removeAll();
+    } else if (faction.levels[level][0] === 0) {
+      faction.statuses[idx].react("\u{2705}")
+        .then(() => faction.statuses[idx].react("\u{1F44B}")).catch(() => {})
+    }
     faction.statuses[idx].edit(messages[0]);
   }
   faction.statuses[faction.statuses.length - 1].edit(messages[1]);
@@ -187,8 +198,7 @@ function editOneLevel(faction, level, messages) {
 
 module.exports.stat = function (channel, level=-1, overwrite=false, stop=false) {
   const faction = getFaction(channel.id);
-  console.log(faction)
-  let messages = [];
+  const messages = [];
 
   if (faction.levels.length === 0 && !stop) {
     return channel.send("Aucun labyrinthe n'est en cours.");
@@ -198,20 +208,26 @@ module.exports.stat = function (channel, level=-1, overwrite=false, stop=false) 
     messages.push(buildStringLevel(channel, level, faction.levels[level]));
   } else {
     messages.push(stop ? "Ce labyrinthe est terminé." : "Un labyrinthe est en cours.");
-    messages = messages.concat(faction.levels.filter((v) => v[0] !== 1)
-      .map((v, i) => buildStringLevel(channel, i, v))
-    );
+    if (faction.statuses.length) {
+      faction.statuses
+        .filter((s) => s.level !== -1 && faction.levels[s.level][0] !== 1)
+        .forEach((s) => messages.push(
+          buildStringLevel(channel, s.level, faction.levels[s.level])
+        ));
+    } else { // start
+      faction.levels.filter((l) => l[0] !== 1)
+        .forEach((l, i) => messages.push(buildStringLevel(channel, i, l)));
+    }
   }
 
   if (stop) {
-    faction.statuses.forEach((s) => s.delete());
-    faction.statuses.length = 0;
-    return sendStatus(channel, messages, stop, faction);
+    return sendStatus(channel, messages, true, faction);
   }
 
   let waiting = "";
   if (faction.queue.length !== 0)
     waiting = `Il y a ${faction.queue.length} switchs en attente. `;
+  waiting += `${faction.levels.filter((l) => l[0] === 1).length}/${faction.levels.length} étages terminés. `;
 
   if (faction.cronjob !== null) {
     messages.push(waiting + `Prochain ping dans ${Tools.getRemainingTimeString(faction.next_reminder - Date.now())}`);
@@ -232,14 +248,10 @@ module.exports.stat = function (channel, level=-1, overwrite=false, stop=false) 
         editOneLevel(faction, level, messages);
         return store();
       }
-
-      // else clear old status
-      faction.statuses.forEach((s) => s.delete());
-      faction.statuses.length = 0;
     }
 
     // new status
-    return sendStatus(channel, messages, stop, faction);
+    return sendStatus(channel, messages, false, faction);
   });
 }
 
@@ -302,7 +314,7 @@ module.exports.next = function (message) {
 module.exports.done = function (channel_id, user_id, level, batch=false) {
   const faction = getFaction(channel_id);
 
-  if (faction.levels.length <= level || faction.levels[level][0] !== 0) {
+  if (level < 0 || faction.levels.length <= level || faction.levels[level][0] !== 0) {
     return false;
   }
 
@@ -317,7 +329,7 @@ module.exports.done = function (channel_id, user_id, level, batch=false) {
 module.exports.switch = function (channel_id, user_id, level, batch=false) {
   const faction = getFaction(channel_id);
 
-  if (faction.levels.length <= level || faction.levels[level][0] !== 0) {
+  if (level < 0 || faction.levels.length <= level || faction.levels[level][0] !== 0) {
     return false;
   }
 

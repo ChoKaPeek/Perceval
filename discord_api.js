@@ -66,7 +66,10 @@ client.on('messageReactionAdd', (react, user) => {
       && err.httpStatus === 404 && err.method === "delete") {
       return; // ignore react failed deletion - message surely got deleted
     }
-    console.error(err);
+    if (err === undefined)
+      console.log("messageReaction: undefined");
+    else
+      console.error(err);
   });
 
 });
