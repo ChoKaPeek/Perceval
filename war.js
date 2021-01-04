@@ -125,21 +125,29 @@ module.exports.start = function (channel, time) {
   return true;
 }
 
-module.exports.stat = function (channel, overwrite=true, stop=false) {
+module.exports.stat = function (channel, overwrite=true, stop=false, retry=false) {
   const faction = getFaction(channel.id);
   if (faction.cronjobs.length === 0) {
     return channel.send("Aucune guerre n'est en cours.");
   }
   const remain_t = Math.abs(faction.end_time - Date.now());
-  const players = Object.entries(faction.players)
-    .map(([k, v]) => [channel.guild.members.cache.get(k).user.username, v])
-    .sort();
+  let players;
+  try {
+    players = Object.entries(faction.players)
+      .map(([k, v]) => [channel.guild.members.cache.get(k).user.username, v])
+      .sort();
+  } catch (error) {
+    if (retry)
+      return false;
+    return channel.guild.members.fetch()
+    .then(() => module.exports.stat(channel, overwrite, stop, true));
+  }
 
   let msg = "";
   if (stop) {
-    msg = `Cette guerre est terminée.`
+    msg = `Cette guerre est terminée.`;
   } else {
-    msg = `La guerre se terminera dans ${Tools.getRemainingTimeString(remain_t)}.`
+    msg = `La guerre se terminera dans ${Tools.getRemainingTimeString(remain_t)}.`;
   }
 
   msg += '\n' + players.map((p) => (p[1] ? (p[1] === 1 ? ":white_check_mark: " : ":wave: ") : ":x: ") + p[0]).join(" | ");
