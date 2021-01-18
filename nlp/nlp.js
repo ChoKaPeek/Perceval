@@ -153,7 +153,8 @@ async function chat(input) {
   const array_result = result.arraySync()[0];
   const tag = saved_data["labels"][max_value_index];
   if (array_result[max_value_index] > 0.7) {
-    // return
+    const resp = intents["intents"].find((i) => i["tag"] === tag)["responses"];
+    return resp[Math.floor(Math.random() * resp.length)];
   } else {
     console.log("Intention detected: " + tag + " " + array_result[max_value_index]);
     console.log("  Input: " + input);
