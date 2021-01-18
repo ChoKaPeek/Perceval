@@ -104,11 +104,16 @@ function getData() {
 }
 
 function getModel() {
-  return fs.access(MODEL, fs.F_OK, (err) => {
-    if (err) { // File does not exist, let's create a tf model
+  try {
+    fs.accessSync(MODEL, fs.F_OK);
+
+    return tf.loadLayersModel("file://" + path.join(MODEL, "model.json"));
+  } catch (err) {
+    if (err.code === "ENOENT") {
+      // File does not exist, let's create a tf model
       const model = tf.sequential({
         layers: [
-          tf.layers.dense({units: 8, batchInputShape: [null, saved_data["training"][0].length]}),
+          tf.layers.dense({units: 8, inputShape: [saved_data["training"][0].length]}),
           tf.layers.dense({units: 8}),
           tf.layers.dense({units: saved_data["output"][0].length, activation: "softmax"})
         ]
@@ -116,11 +121,16 @@ function getModel() {
 
       model.compile({loss: 'meanSquaredError', optimizer: 'adam'});
 
-      return model.fit(tf.stack(saved_data["training"]), tf.stack(saved_data["output"]), {epochs: 1000, batchSize: 8})
-        .then((history) => model.save("file://" + MODEL));
+      return model.fit(tf.tensor2d(saved_data["training"]), tf.tensor2d(saved_data["output"]), {epochs: 100, batchSize: 8})
+        .then((history) => {
+          model.save("file://" + MODEL); // don't wait
+          return model;
+        });
+    } else {
+      console.error(err);
     }
-    return tf.loadLayersModel("file://" + path.join(MODEL, "model.json"));
-  });
+  }
+  return null;
 }
 
 function saveModel() {
@@ -129,7 +139,8 @@ function saveModel() {
 
 function bag_of_words(s, words) {
   const s_words = s.tokenizeAndStem();
-  return words.map((w) => s_words.find(sw => sw === w) === undefined ? 0 : 1);
+  const bag = words.map((w) => s_words.find(sw => sw === w) === undefined ? 0 : 1);
+  return tf.tensor2d(bag, [bag.length, 1]).reshape([-1, bag.length]);
 }
 
 async function chat(input) {
@@ -137,21 +148,14 @@ async function chat(input) {
     await initialise();
   }
 
-  const result = model.predict([bag_of_words(input, saved_data["words"])])[0];
-  const max_value_index = result.map((x, i) => [x, i])
-    .reduce((r, a) => (a[0] > r[0] ? a : r))[1];
+  const result = model.predict(bag_of_words(input, saved_data["words"]));
+  const max_value_index = result.argMax(1).arraySync()[0];
+  const array_result = result.arraySync()[0];
   const tag = saved_data["labels"][max_value_index];
-  if (result[max_value_index] > 0.7) {
-    console.log("Intention detected: " + tag + " " + results[max_value_index]);
+  if (array_result[max_value_index] > 0.7) {
+    // return
   } else {
-    console.log("Intention detected: " + tag + " " + results[max_value_index]);
-    console.log("I didn't quite get that");
-  }
+    console.log("Intention detected: " + tag + " " + array_result[max_value_index]);
+    console.log("  Input: " + input);
+ }
 }
-
-chat("Hi, how are you")
-//chat("Salut, comment ca va")
-//chat("I have an urge to leave")
-//chat("Okey bya")
-//chat("Let's go")
-//chat("This isn't related")
