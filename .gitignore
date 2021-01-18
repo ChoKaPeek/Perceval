@@ -1,8 +1,8 @@
 .DS_Store
 node_modules
 /dist
-data.json
-model.tflearn/
+nlp/data.json
+nlp/model.tflearn/
 
 # local env files
 .env.local
