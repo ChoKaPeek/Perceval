@@ -7,7 +7,8 @@ const tokenizer = new natural.WordTokenizer();
 const fs = require('fs');
 const intents = require('./intents.json');
 
-const MODEL = './model.tflearn';
+const MODEL = './nlp/model.tflearn';
+const DATA = './nlp/data.json';
 
 // promisify fs.readFile() fs.writeFile()
 fs.readFileAsync = function (filename) {
@@ -30,8 +31,11 @@ let saved_data = null;
 let model = null;
 
 async function initialise() {
+  console.log("Initialising NLP data...")
   saved_data = await getData();
+  console.log("Initialising NLP model...")
   model = await getModel();
+  console.log("NLP ready.")
 }
 
 async function createData() {
@@ -39,15 +43,6 @@ async function createData() {
   const labels = [];
   const docs_x = [];
   const docs_y = [];
-
-  const intents = await fs.readFileAsync('./intents.json')
-    .then((success) => JSON.parse(success))
-    .catch((err) => console.error(err));
-
-  if (!intents) {
-    console.error("No intention parsed");
-    return null;
-  }
 
   intents["intents"].forEach((intent) => {
     intent["patterns"].forEach((pattern) => {
@@ -86,13 +81,13 @@ async function createData() {
 function writeData(data) {
   const json_data = JSON.stringify(data);
 
-  return fs.writeFileAsync('./data.json', json_data)
+  return fs.writeFileAsync(DATA, json_data)
     .then((success) => console.log("Data stored"))
     .catch((err) => console.error(err));
 }
 
 function getData() {
-  return fs.readFileAsync('./data.json')
+  return fs.readFileAsync(DATA)
     .then((success) => JSON.parse(success))
     .catch((err) => {
       if (err.code === 'ENOENT') {
@@ -121,7 +116,7 @@ function getModel() {
 
       model.compile({loss: 'meanSquaredError', optimizer: 'adam'});
 
-      return model.fit(tf.tensor2d(saved_data["training"]), tf.tensor2d(saved_data["output"]), {epochs: 100, batchSize: 8})
+      return model.fit(tf.tensor2d(saved_data["training"]), tf.tensor2d(saved_data["output"]), {epochs: 1000, batchSize: 8})
         .then((history) => {
           model.save("file://" + MODEL); // don't wait
           return model;
@@ -143,9 +138,9 @@ function bag_of_words(s, words) {
   return tf.tensor2d(bag, [bag.length, 1]).reshape([-1, bag.length]);
 }
 
-async function chat(input) {
+module.exports.chat = async function (input) {
   if (!model) {
-    await initialise();
+    return "Je suis un peu lent au réveil. Réessayez dans quelques minutes ?";
   }
 
   const result = model.predict(bag_of_words(input, saved_data["words"]));
@@ -155,8 +150,10 @@ async function chat(input) {
   if (array_result[max_value_index] > 0.7) {
     const resp = intents["intents"].find((i) => i["tag"] === tag)["responses"];
     return resp[Math.floor(Math.random() * resp.length)];
-  } else {
-    console.log("Intention detected: " + tag + " " + array_result[max_value_index]);
-    console.log("  Input: " + input);
- }
+  }
+  console.log("Intention detected: " + tag + " " + array_result[max_value_index]);
+  console.log("  Input: " + input);
+  return "Euuuh, c'est pas faux.";
 }
+
+initialise();

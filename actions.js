@@ -6,6 +6,7 @@ const Validators = require("./validators.js");
 const Cronjobs = require("./cronjobs.js");
 const War = require("./war.js");
 const Gauntlet = require("./gauntlet.js");
+const NLP = require("./nlp/nlp.js");
 
 module.exports.helpGauntlet = function (message) {
   message.reply(`Aide module Labyrinthe (\`/gaunt <arg>\`):
@@ -375,6 +376,11 @@ module.exports.switchGauntlet = function (message, levels) {
     Gauntlet.stat(message.channel);
 }
 
+module.exports.nlp = function (message) {
+  NLP.chat(message.content)
+    .then((reply) => message.channel.send(reply))
+    .catch((err) => Errors.unknown(message, err));
+}
 
 function rangeFormat(message, range, str) {
   sheets.spreadsheets.batchUpdate({

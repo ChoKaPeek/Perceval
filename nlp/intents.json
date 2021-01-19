@@ -1,6 +1,6 @@
 {"intents": [
         {"tag": "salut",
-         "patterns": ["Salut", "Hey", "Comment ça va ?", "slt sa va", "wsh", "yo", "plop"],
+         "patterns": ["Coucou", "Salut", "Hey", "Comment ça va ?", "slt sa va", "wsh", "yo", "plop"],
          "responses": ["Salut, Sire. Je trouve qu'il fait beau, mais encore frais, mais beau !"],
          "context_set": ""
         },
