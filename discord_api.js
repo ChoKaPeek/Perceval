@@ -9,7 +9,7 @@ const Errors = require("./errors.js");
 const Validators = require("./validators.js");
 const Const = require("./constants.js");
 
-class EmojiHandled {};
+class EmojiHandled {}; // can be thrown, useful to leave a promise chain
 
 const prefix = "/";
 
@@ -40,7 +40,7 @@ client.on('messageReactionAdd', (react, user) => {
   })
   .then(() => {throw new EmojiHandled})
   .catch((err) => {
-    if (err !== undefined)
+    if (err !== undefined) // did not pass validation
       throw err;
 
     return Validators.gauntlet_status_message(react.message);
@@ -66,8 +66,8 @@ client.on('messageReactionAdd', (react, user) => {
       && err.httpStatus === 404 && err.method === "delete") {
       return; // ignore react failed deletion - message surely got deleted
     }
-    if (err === undefined)
-      console.log("messageReaction: undefined");
+    if (err === undefined) // did not pass validation
+      return;
     else
       console.error(err);
   });
