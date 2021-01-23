@@ -209,6 +209,23 @@ function buildStringPost(faction) {
   return post;
 }
 
+function shiftLevels(faction, level) {
+  const idx = faction.statuses.findIndex((s) => s.level === level);
+  while (idx + 1 < faction.statuses.length) {
+    // move level info to previous level info
+    const tmp = faction.levels[faction.statuses[idx].level];
+    faction.levels[faction.statuses[idx].level] = faction.levels[faction.statuses[idx + 1].level];
+    faction.levels[faction.statuses[idx + 1].level] = tmp;
+
+    // change status level and edit
+    faction.statuses[idx].level = faction.statuses[idx + 1].level;
+    editOneLevel(faction, faction.statuses[idx].level);
+  }
+  // change last status level with the level starting the shift and edit
+  faction.statuses[faction.statuses.length - 1].level = level;
+  editOneLevel(faction, faction.statuses[faction.statuses.length - 1].level);
+}
+
 function editOneLevel(faction, level) {
   const idx = faction.statuses.findIndex((s) => s.level === level);
 
@@ -308,7 +325,9 @@ module.exports.next = function (message) {
     setReminder(faction);
   }
 
-  module.exports.stat(message.channel, level);
+  shiftLevels(faction, level);
+
+  store();
   return true;
 }
 
