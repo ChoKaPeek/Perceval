@@ -145,7 +145,7 @@ client.on("message", function(message) {
     .catch((err) => Errors.handle(message, err));
   }
 
-  else if (command === "gauntlet") {
+  else if (command === "gaunt" || command === "gauntlet") {
     if (args.length === 0)
       return Errors.bad_arg(message);
 

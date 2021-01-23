@@ -151,7 +151,7 @@ async function sendStatus(faction, stop) {
     faction.statuses.length = 0;
   } else {
     faction.statuses[0].react("\u{1F504}").catch(() => {});
-    faction.statuses.slice(1, messages.length - 1).forEach((s) => {
+    faction.statuses.slice(1, faction.statuses.length - 1).forEach((s) => {
       if (faction.levels[s.level][0] === 0) {
         return s.react("\u{2705}")
           .then(() => s.react("\u{1F44B}")).catch(() => {})
