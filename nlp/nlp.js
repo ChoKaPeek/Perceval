@@ -140,7 +140,7 @@ function bag_of_words(s, words) {
 
 module.exports.chat = async function (input) {
   if (!model) {
-    return "Je suis un peu lent au réveil. Réessayez dans quelques minutes ?";
+    return "Je redémarre mes neurones. Réessayez dans quelques minutes ?";
   }
 
   const result = model.predict(bag_of_words(input, saved_data["words"]));
