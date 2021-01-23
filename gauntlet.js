@@ -137,8 +137,10 @@ async function sendStatus(faction, stop) {
       tmp_string = buildStringPre(faction, stop);
     else if (i === levels.length - 1)
       tmp_string = buildStringPost(faction);
-    else
+    else {
+      if (stop) continue; // don't print each level's status
       tmp_string = buildStringLevel(faction, levels[i]);
+    }
 
     let tmp_stat = await faction.channel.send(tmp_string);
     tmp_stat.level = levels[i];
@@ -223,8 +225,6 @@ function editOneLevel(faction, level) {
     faction.statuses[idx].edit(buildStringLevel(faction, level));
   }
   faction.statuses[faction.statuses.length - 1].edit(buildStringPost(faction));
-
-  return;
 }
 
 module.exports.stat = function (channel, level=-1, overwrite=false, stop=false) {
