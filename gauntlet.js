@@ -198,6 +198,8 @@ function buildStringPost(faction) {
   if (faction.queue.length !== 0)
     post = `Il y a ${faction.queue.length} switchs en attente. `;
 
+  console.log("exxxxxxwqew")
+  console.log(faction.levels)
   post += `${faction.levels.filter((l) => l[0] === 1).length}/${faction.levels.length} étages terminés. `;
 
   if (faction.cronjob !== null) {
@@ -210,25 +212,30 @@ function buildStringPost(faction) {
 }
 
 function shiftLevels(faction, level) {
-  const idx = faction.statuses.findIndex((s) => s.level === level);
-  while (idx + 1 < faction.statuses.length) {
+  let idx = faction.statuses.findIndex((s) => s.level === level);
+  while (idx + 1 < faction.statuses.length - 1) {
+    console.log("ewqew")
+    console.log(faction.levels)
     // move level info to previous level info
     const tmp = faction.levels[faction.statuses[idx].level];
     faction.levels[faction.statuses[idx].level] = faction.levels[faction.statuses[idx + 1].level];
     faction.levels[faction.statuses[idx + 1].level] = tmp;
 
-    // change status level and edit
-    faction.statuses[idx].level = faction.statuses[idx + 1].level;
+    // edit status level
     editOneLevel(faction, faction.statuses[idx].level);
+
+    idx += 1;
   }
-  // change last status level with the level starting the shift and edit
-  faction.statuses[faction.statuses.length - 1].level = level;
-  editOneLevel(faction, faction.statuses[faction.statuses.length - 1].level);
+  // edit last status level
+  editOneLevel(faction, faction.statuses[faction.statuses.length - 2].level);
+  console.log(faction.levels)
 }
 
 function editOneLevel(faction, level) {
   const idx = faction.statuses.findIndex((s) => s.level === level);
 
+  console.log(level)
+  console.log(faction.levels)
   if (faction.levels[level][0] === 1) {
     faction.statuses[idx].delete();
     faction.statuses.splice(idx, 1);
@@ -410,6 +417,7 @@ async function init() {
               })
               .then(() => {
                 if (body._source[key].status_infos.length) {
+                  console.log("received status")
                   return recvStatus(gauntlet[key], body._source[key]);
                 }
               })
