@@ -195,11 +195,10 @@ function buildStringLevel(faction, index) {
 function buildStringPost(faction) {
   let post = "";
 
-  if (faction.queue.length !== 0)
+  if (faction.queue.length !== 0) {
     post = `Il y a ${faction.queue.length} switchs en attente. `;
+  }
 
-  console.log("exxxxxxwqew")
-  console.log(faction.levels)
   post += `${faction.levels.filter((l) => l[0] === 1).length}/${faction.levels.length} étages terminés. `;
 
   if (faction.cronjob !== null) {
@@ -212,39 +211,40 @@ function buildStringPost(faction) {
 }
 
 function shiftLevels(faction, level) {
+  // shift levels idx by -1 after switched level, moving in last pos
+  const tmp = faction.levels[level];
+  for (let i = level; i + 1 < faction.levels.length; ++i) {
+    faction.levels[i] = faction.levels[i + 1];
+  }
+  faction.levels[faction.levels.length - 1] = tmp;
+
   let idx = faction.statuses.findIndex((s) => s.level === level);
   while (idx + 1 < faction.statuses.length - 1) {
-    console.log("ewqew")
-    console.log(faction.levels)
-    // move level info to previous level info
-    const tmp = faction.levels[faction.statuses[idx].level];
-    faction.levels[faction.statuses[idx].level] = faction.levels[faction.statuses[idx + 1].level];
-    faction.levels[faction.statuses[idx + 1].level] = tmp;
-
+    // level is next level minus the shift
+    faction.statuses[idx].level = faction.statuses[idx + 1].level - 1;
     // edit status level
     editOneLevel(faction, faction.statuses[idx].level);
 
     idx += 1;
   }
+  // last level is max level
+  faction.statuses[faction.statuses.length - 2].level = faction.levels.length - 1;
   // edit last status level
   editOneLevel(faction, faction.statuses[faction.statuses.length - 2].level);
-  console.log(faction.levels)
 }
 
 function editOneLevel(faction, level) {
   const idx = faction.statuses.findIndex((s) => s.level === level);
 
-  console.log(level)
-  console.log(faction.levels)
   if (faction.levels[level][0] === 1) {
     faction.statuses[idx].delete();
     faction.statuses.splice(idx, 1);
   } else {
     if (faction.levels[level][0] === 2) {
-      faction.statuses[idx].reactions.removeAll();
+      faction.statuses[idx].reactions.removeAll().catch(() => {});
     } else if (faction.levels[level][0] === 0) {
       faction.statuses[idx].react("\u{2705}")
-        .then(() => faction.statuses[idx].react("\u{1F44B}")).catch(() => {})
+        .then(() => faction.statuses[idx].react("\u{1F44B}")).catch(() => {});
     }
     faction.statuses[idx].edit(buildStringLevel(faction, level));
   }
@@ -417,7 +417,6 @@ async function init() {
               })
               .then(() => {
                 if (body._source[key].status_infos.length) {
-                  console.log("received status")
                   return recvStatus(gauntlet[key], body._source[key]);
                 }
               })
