@@ -145,6 +145,12 @@ client.on("message", function(message) {
     .catch((err) => Errors.handle(message, err));
   }
 
+  else if (command === "codex") {
+    if (args.length < 1)
+      return Errors.bad_arg(message);
+    return Actions.codex(message, args);
+  }
+
   else if (command === "gaunt" || command === "gauntlet") {
     if (args.length === 0)
       return Errors.bad_arg(message);

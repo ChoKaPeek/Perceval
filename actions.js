@@ -7,6 +7,8 @@ const Cronjobs = require("./cronjobs.js");
 const War = require("./war.js");
 const Gauntlet = require("./gauntlet.js");
 const NLP = require("./nlp/nlp.js");
+const Codex = require("./codex.js");
+const Discord = require("discord.js");
 
 module.exports.helpGauntlet = function (message) {
   message.reply(`Aide module Labyrinthe (\`/gaunt <arg>\`):
@@ -380,6 +382,19 @@ module.exports.nlp = function (message) {
   NLP.chat(message.content)
     .then((reply) => message.channel.send(reply))
     .catch((err) => Errors.unknown(message, err));
+}
+
+module.exports.codex = function (message, args) {
+  const monster = args.join(' ');
+  Codex.display(monster)
+    .then((reply) => {
+      const embed = new Discord.MessageEmbed()
+        .setTitle(reply.monster)
+        .setDescription("Page du codex :")
+        .setImage("https://nsa40.casimages.com/img/2021/02/01/210201093610921897.jpg");
+      message.channel.send(embed)
+    })
+    .catch((err) => Errors.handle(message, err));
 }
 
 function rangeFormat(message, range, str) {

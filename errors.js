@@ -84,6 +84,14 @@ module.exports.bad_arg = function (entity) {
   return answer(entity, `Euuuh, c'est pas faux. *Essaie \`/help\` ?*`);
 }
 
+module.exports.codex_unknown = function (entity, monster) {
+  return answer(entity, `Le monstre ${monster} est inconnu.`);
+}
+
+module.exports.codex_not_yet = function (entity, monster) {
+  return answer(entity, `Le monstre ${monster} n'est pas encore suffisamment documenté.`);
+}
+
 module.exports.handle = function (entity, err) {
   if (err.callback) {
     if (err.args) {
