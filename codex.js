@@ -35,12 +35,12 @@ module.exports.display = function (monster) {
       let idx = -1;
       let range = "";
       let monster_name = "";
-      res.data.valueRanges.some((dic) => {
-        if (dic.values !== undefined) {
-          // levenshtein can introduce a bug if this for doesn't exist
-          // (monsters can have close names and the chosen one must be the
-          // closest match. This won't slow down perfect requests.)
-          for (let i = 0; i < MAX_LEV; ++i) {
+      // levenshtein can introduce a bug if this for doesn't exist
+      // (monsters can have close names and the chosen one must be the
+      // closest match. This won't slow down perfect requests.)
+      for (let i = 0; i < MAX_LEV && idx === -1; ++i) {
+        res.data.valueRanges.some((dic) => {
+          if (dic.values !== undefined) {
             const tmp_idx = dic.values.findIndex((e) =>
               levenshtein(e[0].toLowerCase().trim(), preproc_monster) <= i);
             if (tmp_idx !== -1) {
@@ -50,9 +50,9 @@ module.exports.display = function (monster) {
               return true;
             }
           }
-        }
-        return false;
-      });
+          return false;
+        });
+      }
 
       if (idx !== -1) {
         const split = range.split("!");
