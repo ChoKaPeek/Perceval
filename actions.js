@@ -84,6 +84,8 @@ module.exports.help = function (message) {
         Utiliser \`/help gauntlet\` pour une liste des actions disponibles
     - \`/war\`:
         Utiliser \`/help war\` pour une liste des actions disponibles
+    - \`/codex <monster name>\`:
+        Affiche une page de codex complète pour le monstre demandé
     - \`/roster\`:
         Affiche le roster`
   );
