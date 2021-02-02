@@ -89,7 +89,7 @@ module.exports.codex_unknown = function (entity, monster) {
 }
 
 module.exports.codex_not_yet = function (entity, monster) {
-  return answer(entity, `Le monstre ${monster} n'est pas encore suffisamment documenté.`);
+  return answer(entity, `Désolé, le monstre ${monster} n'est pas encore suffisamment documenté.`);
 }
 
 module.exports.handle = function (entity, err) {

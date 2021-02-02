@@ -391,7 +391,7 @@ module.exports.codex = function (message, args) {
       const embed = new Discord.MessageEmbed()
         .setTitle(reply.monster)
         .setDescription("Page du codex :")
-        .setImage("https://nsa40.casimages.com/img/2021/02/01/210201093610921897.jpg");
+        .setImage(reply.url);
       message.channel.send(embed)
     })
     .catch((err) => Errors.handle(message, err));

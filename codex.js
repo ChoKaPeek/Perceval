@@ -31,20 +31,24 @@ module.exports.display = function (monster) {
         console.log('The API returned an error: ' + err);
         return reject({callback: Errors.unknown});
       }
-      console.log(res.data.valueRanges[0].values);
 
       let idx = -1;
       let range = "";
       let monster_name = "";
       res.data.valueRanges.some((dic) => {
         if (dic.values !== undefined) {
-          const tmp_idx = dic.values.findIndex((e) =>
-            levenshtein(e[0].toLowerCase().trim(), preproc_monster) < MAX_LEV);
-          if (tmp_idx !== -1) {
-            idx = tmp_idx;
-            range = dic.range;
-            monster_name = dic.values[tmp_idx][0];
-            return true;
+          // levenshtein can introduce a bug if this for doesn't exist
+          // (monsters can have close names and the chosen one must be the
+          // closest match. This won't slow down perfect requests.)
+          for (let i = 0; i < MAX_LEV; ++i) {
+            const tmp_idx = dic.values.findIndex((e) =>
+              levenshtein(e[0].toLowerCase().trim(), preproc_monster) <= i);
+            if (tmp_idx !== -1) {
+              idx = tmp_idx;
+              range = dic.range;
+              monster_name = dic.values[tmp_idx][0];
+              return true;
+            }
           }
         }
         return false;
@@ -52,20 +56,19 @@ module.exports.display = function (monster) {
 
       if (idx !== -1) {
         const split = range.split("!");
-        const cell = `${String.fromCharCode(split[1][0].charCodeAt(0) + 1)}${idx + HEADERS + 2}`;
-        const new_range = `${split[0]}!${cell}:${cell}`;
+        const cell = `${String.fromCharCode(split[1][0].charCodeAt(0) + 1)}${idx + HEADERS + 1}`;
+        const new_range = `${split[0]}!${cell}`;
 
         return sheets.spreadsheets.values.get({
           spreadsheetId: process.env.CODEX_SPREADSHEET_ID,
-          range: new_range,
-          valueRenderOption: "FORMULA"
+          range: new_range
         }, (err, res) => {
           if (err) {
             console.log('The API returned an error: ' + err);
             return reject({callback: Errors.unknown});
           }
-          console.log(res.data);
-          if (res.data.values[0][0] === "Link") {
+
+          if (res.data.values && res.data.values[0][0] !== "") {
             return resolve({monster: monster_name, url: res.data.values[0][0]});
           }
           return reject({callback: Errors.codex_not_yet, args: [monster_name]});
