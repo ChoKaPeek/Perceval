@@ -63,6 +63,8 @@ function getFaction(channel_id) {
     return war.ice;
   if (channel_id === Const.WAR_STORM)
     return war.storm;
+  if (channel_id === Const.CHANNEL_TEST)
+    return war.fire;
   return null;
 }
 

@@ -33,7 +33,8 @@ module.exports.war_channel = function(message) {
     if (message.channel.id !== Const.WAR_EARTH
       && message.channel.id !== Const.WAR_FIRE
       && message.channel.id !== Const.WAR_ICE
-      && message.channel.id !== Const.WAR_STORM) {
+      && message.channel.id !== Const.WAR_STORM
+      && message.channel.id !== Const.CHANNEL_TEST) {
       return reject({callback: Errors.bad_channel});
     }
     return resolve();
@@ -45,7 +46,8 @@ module.exports.gauntlet_channel = function(message) {
     if (message.channel.id !== Const.GAUNTLET_EARTH
       && message.channel.id !== Const.GAUNTLET_FIRE
       && message.channel.id !== Const.GAUNTLET_ICE
-      && message.channel.id !== Const.GAUNTLET_STORM) {
+      && message.channel.id !== Const.GAUNTLET_STORM
+      && message.channel.id !== Const.CHANNEL_TEST) {
       return reject({callback: Errors.bad_channel});
     }
     return resolve();
@@ -65,7 +67,8 @@ module.exports.authorized = function (message, role) {
         if (!member) {
           return reject({callback: Errors.sync_error});
         }
-        if (member.roles.cache.has(role)) {
+        if (member.roles.cache.has(role)
+          || member.roles.cache.has(Const.ROLE_TESTEUR)) {
           return resolve();
         }
         return reject({callback: Errors.unauthorized});

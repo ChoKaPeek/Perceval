@@ -1,3 +1,6 @@
+const CHANNEL_TEST = "800731875290513488";
+const ROLE_TESTEUR = "807007156376436818";
+
 const FACTION_NAMES = ['earth', 'fire', 'ice', 'storm'];
 
 const WAR_EARTH = "776150841529860176";
@@ -27,6 +30,8 @@ const NIVEAUX_SID = 646100848;
 const BLAMES_SID = 768802987;
 
 module.exports = {
+  CHANNEL_TEST,
+  ROLE_TESTEUR,
   FACTION_NAMES,
   WAR_EARTH,
   WAR_FIRE,
