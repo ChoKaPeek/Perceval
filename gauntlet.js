@@ -79,6 +79,8 @@ function getFaction(channel_id) {
     return gauntlet.ice;
   if (channel_id === Const.GAUNTLET_STORM)
     return gauntlet.storm;
+  if (channel_id === Const.CHANNEL_TEST)
+    return gauntlet.fire;
   return null;
 }
 
@@ -332,6 +334,8 @@ module.exports.next = function (message) {
     setReminder(faction);
   }
 
+  // Shift everything (statuses, queue)
+  faction.queue = faction.queue.map((e) => e > level ? e - 1 : e);
   shiftLevels(faction, level);
 
   store();
