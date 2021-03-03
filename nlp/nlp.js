@@ -9,6 +9,7 @@ const intents = require('./intents.json');
 
 const MODEL = './nlp/model.tflearn';
 const DATA = './nlp/data.json';
+const DEBUG = false;
 
 // promisify fs.readFile() fs.writeFile()
 fs.readFileAsync = function (filename) {
@@ -116,7 +117,12 @@ function getModel() {
 
       model.compile({loss: 'meanSquaredError', optimizer: 'adam'});
 
-      return model.fit(tf.tensor2d(saved_data["training"]), tf.tensor2d(saved_data["output"]), {epochs: 1000, batchSize: 8})
+      return model.fit(tf.tensor2d(saved_data["training"]), tf.tensor2d(saved_data["output"]),
+        {
+          epochs: 1000,
+          batchSize: 8,
+          verbose: DEBUG ? 1 : 0
+        })
         .then((history) => {
           model.save("file://" + MODEL); // don't wait
           return model;
