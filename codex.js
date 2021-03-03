@@ -42,6 +42,7 @@ module.exports.display = function (monster) {
         res.data.valueRanges.some((dic) => {
           if (dic.values !== undefined) {
             const tmp_idx = dic.values.findIndex((e) =>
+              e[0] !== undefined && isNaN(e[0]) &&
               levenshtein(e[0].toLowerCase().trim(), preproc_monster) <= i);
             if (tmp_idx !== -1) {
               idx = tmp_idx;
