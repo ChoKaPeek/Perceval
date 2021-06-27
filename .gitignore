@@ -1,8 +1,12 @@
 .DS_Store
-node_modules
+/node_modules/
 /dist
-nlp/data.json
-nlp/model.tflearn/
+/nlp/data.json
+/nlp/model.tflearn/
+/ocr/tmp/*
+/eng.traineddata
+/build/
+!.gitkeep
 
 # local env files
 .env.local

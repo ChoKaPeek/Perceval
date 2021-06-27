@@ -8,6 +8,7 @@ const War = require("./war.js");
 const Gauntlet = require("./gauntlet.js");
 const NLP = require("./nlp/nlp.js");
 const Codex = require("./codex.js");
+const OCR = require("./ocr.js");
 const Discord = require("discord.js");
 
 module.exports.helpGauntlet = function (message) {
@@ -409,5 +410,12 @@ function rangeFormat(message, range, str) {
     if (err) return Errors.unknown(message, err);
 
     message.reply(str);
+  });
+}
+
+module.exports.ocr = function (message) {
+  message.attachments.forEach(async (attachment, key) => {
+    const reply = await OCR.readGuild(attachment.url);
+    message.channel.send(reply);
   });
 }

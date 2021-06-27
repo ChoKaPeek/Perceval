@@ -76,11 +76,16 @@ client.on('messageReactionAdd', (react, user) => {
 
 client.on("message", function(message) {
   if (message.author.bot) return;
+  console.log(message);
   if (message.mentions.users.has(client.user.id)
     || message.content.includes("erceval")
     || message.content.includes("erseval")) {
     return Actions.nlp(message);
   }
+
+  if (Validators.isValidOCR(message))
+    return Actions.ocr(message);
+
   if (!message.content.startsWith(prefix)) return;
 
   const commandBody = message.content.slice(prefix.length);
