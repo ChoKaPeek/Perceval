@@ -456,7 +456,17 @@ module.exports.addEco = async function (message, args) {
 }
 
 module.exports.analyseEco = function (message) {
-  Eco.analyse()
-    .then((success) => message.channel.send(success.attachment))
-    .catch((err) => Errors.handle(message, err));
+  Eco.analyse().then((success) => {
+    ["gold", "orn", "florin"].forEach(e => {
+      const file = new Discord.MessageAttachment(success.attachments[e], `${e}.png`);
+
+      const embed = new Discord.MessageEmbed()
+      .setTitle(e)
+      .attachFiles(file)
+      .setImage(`attachment:\/\/${e}.png`);
+
+      message.channel.send(embed);
+    });
+  })
+  .catch((err) => Errors.handle(message, err));
 }
