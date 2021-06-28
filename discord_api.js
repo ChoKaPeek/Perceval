@@ -76,9 +76,11 @@ client.on('messageReactionAdd', (react, user) => {
 
 client.on("message", function(message) {
   if (message.author.bot) return;
-  console.log(message);
+
+  console.log(message.attachments);
   if (message.mentions.users.has(client.user.id)
     || message.content.includes("erceval")
+    || message.content.includes("percy")
     || message.content.includes("erseval")) {
     return Actions.nlp(message);
   }
@@ -101,6 +103,14 @@ client.on("message", function(message) {
       if (args[0] === "war")
         return Actions.helpWar(message);
     }
+    return Errors.bad_arg(message);
+  }
+
+  else if (command === "eco") {
+    if (args.length === 0)
+      return Actions.analyseEco(message);
+    else if (args.length === 3)
+      return Actions.addEco(message, args);
     return Errors.bad_arg(message);
   }
 

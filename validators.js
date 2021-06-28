@@ -137,7 +137,7 @@ module.exports.exist = function (names, range, should_exist=true) {
 
 module.exports.isValidOCR = function (message) {
   return (message.channel.id == Const.OCR_CHAN
-    && !message.attachments.length)
+    && message.attachments.size !== 0)
 }
 
 

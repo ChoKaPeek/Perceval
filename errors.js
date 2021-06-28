@@ -29,6 +29,10 @@ module.exports.no_gauntlet = function (entity) {
   return answer(entity, `Il n'y a pas de labyrinthe en cours sur ce canal de discussion.`);
 }
 
+module.exports.no_data = function (entity) {
+  return answer(entity, `Il n'y a pas encore de données sauvegardées.`);
+}
+
 module.exports.unknown = function (entity, err=null) {
   if (err) {
     console.error(err);

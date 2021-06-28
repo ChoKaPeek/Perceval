@@ -10,6 +10,8 @@ const NLP = require("./nlp/nlp.js");
 const Codex = require("./codex.js");
 const OCR = require("./ocr.js");
 const Discord = require("discord.js");
+const Const = require("./constants.js");
+const Eco = require("./eco.js");
 
 module.exports.helpGauntlet = function (message) {
   message.reply(`Aide module Labyrinthe (\`/gaunt <arg>\`):
@@ -413,9 +415,48 @@ function rangeFormat(message, range, str) {
   });
 }
 
-module.exports.ocr = function (message) {
+const OCR_filter = (reaction, user) => {
+	return [Const.EMOJIS.GREEN_CHECK, Const.EMOJIS.RED_CROSS]
+    .includes(reaction.emoji.name);
+};
+
+module.exports.ocr = async function (message) {
   message.attachments.forEach(async (attachment, key) => {
-    const reply = await OCR.readGuild(attachment.url);
-    message.channel.send(reply);
+    const nums = await OCR.readGuild(attachment.url);
+    const fmt_nums = `${nums.gold} or, ${nums.orn} orn et ${nums.florin} florin`;
+
+    const validation = await message.channel.send(`Ajouter ${fmt_nums} ?`);
+    validation.react(Const.EMOJIS.GREEN_CHECK)
+    .then(() => validation.react(Const.EMOJIS.RED_CROSS))
+    .then(() => {
+      validation.awaitReactions(OCR_filter, { max: 1, time: 60000, errors: ['time'] })
+      .then(collected => {
+        const reaction = collected.first();
+
+        if (reaction.emoji.name === Const.EMOJIS.GREEN_CHECK) {
+          Eco.addMeasure(nums.gold, nums.orn, nums.florin);
+          message.channel.send(`Ajouté ${fmt_nums}`);
+        } else {
+          message.channel.send('Ajout annulé.');
+        }
+        validation.delete();
+      }).catch(() => {
+        Eco.addMeasure(nums.gold, nums.orn, nums.florin);
+        message.channel.send(`Ajouté ${fmt_nums}`);
+        validation.delete();
+      });
+    }).catch(() => {}); // Ignore as message probably got deleted
   });
+}
+
+module.exports.addEco = async function (message, args) {
+  Eco.addMeasure(args[0], args[1], args[2])
+    .then(() => message.reply("bien ajouté."))
+    .catch((err) => Errors.handle(message, err));
+}
+
+module.exports.analyseEco = function (message) {
+  Eco.analyse()
+    .then((success) => message.channel.send(success))
+    .catch((err) => Errors.handle(message, err));
 }

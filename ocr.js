@@ -75,8 +75,6 @@ async function templateMatch(mat, template, save=false) {
     mat.rectangle(top_left, sizes, [255, 255, 255, 100], 4);
     await mat.save(temp_cv);
   }
-  console.log(top_left);
-  console.log(sizes);
 
   return {top_left, sizes};
 }
@@ -87,7 +85,6 @@ async function getNumberIn(mat, x, y, width, height, uniq="default") {
   await win_info.save(path);
 
   return await worker.recognize(path).then((obj) => {
-    console.log(obj)
     let text = obj.data.text.split('\n');
     if (text)
     {
@@ -121,7 +118,7 @@ module.exports.readGuild = async (url) => {
   const number_florin = await getNumberIn(mat, florin.top_left[0] + florin.sizes[0],
     florin.top_left[1], mat.width() - florin.top_left[0] - florin.sizes[0], florin.sizes[1], "florin");
 
-  return `Gold: ${number_gold}, Orn: ${number_orn}, Florin: ${number_florin}`;
+  return { gold: number_gold, orn: number_orn, florin: number_florin };
 }
 
 module.exports.readImage = async (url) => {
