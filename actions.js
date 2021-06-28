@@ -457,6 +457,6 @@ module.exports.addEco = async function (message, args) {
 
 module.exports.analyseEco = function (message) {
   Eco.analyse()
-    .then((success) => message.channel.send(success))
+    .then((success) => message.channel.send(success.attachment))
     .catch((err) => Errors.handle(message, err));
 }
