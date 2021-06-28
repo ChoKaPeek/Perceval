@@ -11,6 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "@tensorflow/tfjs-node": "^2.8.4",
+    "canvas": "^2.8.0",
     "dateformat": "^3.0.3",
     "discord.js": "^12.4.1",
     "dotenv": "^8.2.0",
@@ -20,8 +21,8 @@
     "jimp": "^0.16.1",
     "js-levenshtein": "^1.1.6",
     "natural": "^2.4.5",
-    "nodeplotlib": "^0.7.3",
     "opencv": "^7.0.0",
-    "tesseract.js": "^2.0.0-beta.1"
+    "tesseract.js": "^2.0.0-beta.1",
+    "vega": "^5.20.2"
   }
 }
