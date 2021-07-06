@@ -65,6 +65,14 @@ async function vegaRun(values) {
     "description": "A chart of the guild's economy",
     "width": 700,
     "height": 300,
+    "config": {
+      "axis": {
+        "labelColor": "white"
+      },
+      "axisY": {
+        "labelFontSize": 16
+      }
+    },
     "padding": 5,
 
     "signals": [

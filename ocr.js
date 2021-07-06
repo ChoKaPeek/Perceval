@@ -4,12 +4,7 @@ const jimp = require('jimp');
 
 let worker;
 
-const templates = {
-  gold: null,
-  orn: null,
-  florin: null,
-  orn_gaunt: null
-}
+const templates = {};
 
 const root = 'ocr/';
 const temp = root + 'tmp/';
@@ -22,9 +17,14 @@ const matchMethods = {
   "TM_CCORR_NORMED": 3, "TM_CCOEFF": 4, "TM_CCOEFF_NORMED": 5
 }
 
-// example: convert("img.png", "img.js")
+const devices = {
+  "720x1600": "normal",
+  "1080x2340": "large"
+}
+
+// example: convert("img.png", "img.jpg")
 async function convert(src, dst) {
-  Jimp.read(src, function (err, image) {
+  jimp.read(src, function (err, image) {
     if (err) {
       console.log(err)
     } else {
@@ -46,10 +46,14 @@ async function init(message) {
 
   templates.orn_gaunt = await cv.readImage(root + "orn_gaunt.jpg");
   templates.orn_gaunt.convertGrayscale();
-  templates.gold = await cv.readImage(root + "gold.jpg");
-  templates.orn = await cv.readImage(root + "orn.jpg");
-  templates.florin = await cv.readImage(root + "florin.jpg");
+  await Object.keys(devices).forEach(async (key) => {
+    templates[devices[key]] = {};
+    templates[devices[key]].gold = await cv.readImage(root + devices[key] + "_gold.jpg");
+    templates[devices[key]].orn = await cv.readImage(root + devices[key] + "_orn.jpg");
+    templates[devices[key]].florin = await cv.readImage(root + devices[key] + "_florin.jpg");
+  });
 
+  //await module.exports.readGuild('https://cdn.discordapp.com/attachments/800731875290513488/859195099569324042/mowiss_guild.png');
   console.log("OCR initialised.")
 }
 
@@ -80,8 +84,13 @@ async function templateMatch(mat, template, save=false) {
 }
 
 async function getNumberIn(mat, x, y, width, height, uniq="default") {
-  const path = `${temp}${uniq}.jpg`;
+  if (x <= 0 || y <= 0 || width <= 0 || height <= 0)
+    return "Could not find the number";
+
   const win_info = await mat.crop(x, y, width, height);
+
+  // forced to save then reload for the picture to be in jpg format...
+  const path = `${temp}${uniq}.jpg`;
   await win_info.save(path);
 
   return await worker.recognize(path).then((obj) => {
@@ -90,9 +99,9 @@ async function getNumberIn(mat, x, y, width, height, uniq="default") {
     {
       let line = text[0].split(' ');
       if (line && line.length > 0)
-        return line[line.length - 1]
+        return line[line.length - 1];
     }
-    return "Could not find the number"
+    return "Could not find the number";
   });
 
 }
@@ -105,11 +114,16 @@ module.exports.readGuild = async (url) => {
   await image.writeAsync(temp_jimp);
 
   let mat = await cv.readImage(temp_jimp);
+
+  // device-specific choice of template
+  const template = templates[devices[`${mat.width()}x${mat.height()}`]];
+  console.log(template);
+
   mat = await mat.crop(0, 0, mat.width(), Math.floor(mat.height() / 10));
 
-  const gold = await templateMatch(mat, templates.gold);
-  const orn = await templateMatch(mat, templates.orn);
-  const florin = await templateMatch(mat, templates.florin);
+  const gold = await templateMatch(mat, template.gold);
+  const orn = await templateMatch(mat, template.orn);
+  const florin = await templateMatch(mat, template.florin);
 
   const number_gold = await getNumberIn(mat, gold.top_left[0] + gold.sizes[0],
     gold.top_left[1], orn.top_left[0] - gold.top_left[0] - gold.sizes[0], gold.sizes[1], "gold");
