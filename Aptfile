@@ -1,0 +1,4 @@
+cmake
+g++
+unzip
+wget
